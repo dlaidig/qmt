@@ -1,0 +1,13 @@
+# SPDX-FileCopyrightText: 2021 Daniel Laidig <laidig@control.tu-berlin.de>
+#
+# SPDX-License-Identifier: MIT
+
+# webapps
+include qmt/webapps/lib-qmt/index.html
+include qmt/webapps/lib-qmt/lib-qmt.js
+include qmt/webapps/lib-qmt/style.css
+prune qmt/webapps/**/node_modules
+prune qmt/webapps/**/dist
+
+# matlab code
+recursive-include qmt/matlab/ *.m

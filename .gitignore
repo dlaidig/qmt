@@ -1,0 +1,9 @@
+# SPDX-FileCopyrightText: 2021 Daniel Laidig <laidig@control.tu-berlin.de>
+#
+# SPDX-License-Identifier: MIT
+
+/build/
+/qmt.egg-info/
+__pycache__/
+/qmt/cpp/dummy.cpp
+/qmt/cpp/*.so
