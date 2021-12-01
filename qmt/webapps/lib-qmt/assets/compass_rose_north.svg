@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg version="1.1" viewBox="0 0 317 317" width="150mm" height="150mm" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+ <title>Compass Rose</title>
+ <g transform="translate(2.5,2.5)">
+  <g id="ring" stroke="#000">
+   <path id="inner-line" d="m228 156a72 72 0 1 1-144 0 72 72 0 1 1 144 0z" fill="none" stroke-width=".25"/>
+   <path id="outer-line" d="m252 156a96 96 0 1 1-192 0 96 96 0 1 1 192 0z" fill="none" stroke-width=".25"/>
+   <path id="ring-fill" d="m156 60c-53.019 0-96 42.981-96 96s42.981 96 96 96 96-42.981 96-96-42.981-96-96-96zm0 24c39.764 0 72 32.236 72 72s-32.236 72-72 72-72-32.236-72-72 32.236-72 72-72z" fill="#808080" stroke-width=".25"/>
+  </g>
+  <g id="major-rose-edge" fill="none" stroke="#fff">
+   <path id="highlight-north" d="m156 156 24-24-24-132"/>
+   <path id="highlight-east" d="m156 156 24 24 132-24"/>
+   <path id="highlight-south" d="m156 156-24 24 24 132"/>
+   <path id="highlight-west" d="m156 156-24-24-132 24"/>
+  </g>
+  <g id="minor-rose">
+   <g id="light-minor" fill="#cdcdcd" stroke="#000" stroke-width=".25">
+    <path id="light-northeast" d="m156 156 48-48-48 23"/>
+    <path id="light-southeast" d="m156 156 48 48-23-48"/>
+    <path id="light-southwest" d="m156 156-48 48 48-23"/>
+    <path id="light-northwest" d="m156 156-48-48 23 48"/>
+   </g>
+   <g id="dark-minor" fill="#808080">
+    <path id="dark-northeast" d="m156 156 48-48-23 48"/>
+    <path id="dark-southeast" d="m156 156 48 48-48-23"/>
+    <path id="dark-southwest" d="m156 156-48 48 23-48"/>
+    <path id="dark-northwest" d="m156 156-48-48 48 23"/>
+   </g>
+  </g>
+  <g id="major-rose">
+   <g id="light-major" fill="#cdcdcd" stroke="#000" stroke-width=".25">
+    <path id="light-north" d="m156 156-24-24 24-132"/>
+    <path id="light-east" d="m156 156 24-24 132 24"/>
+    <path id="light-south" d="m156 156 24 24-24 132"/>
+    <path id="light-west" d="m156 156-24 24-132-24"/>
+   </g>
+   <g id="dark-major">
+    <path id="dark-north" d="m156 156 24-24-24-132" fill="#d6272f"/>
+    <g fill="#808080">
+     <path id="dark-east" d="m156 156 24 24 132-24"/>
+     <path id="dark-south" d="m156 156-24 24 24 132"/>
+     <path id="dark-west" d="m156 156-24-24-132 24"/>
+    </g>
+   </g>
+  </g>
+ </g>
+ <metadata>
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:title>Compass Rose</dc:title>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+</svg>

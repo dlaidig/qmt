@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<!--
+SPDX-FileCopyrightText: 2021 Daniel Laidig <laidig@control.tu-berlin.de>
+
+SPDX-License-Identifier: MIT
+-->
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html" charset="utf-8"/>
+    <title>UI Gallery</title>
+    <link rel="stylesheet" href="/lib-qmt/style.css">
+</head>
+<body>
+<div id="app"></div>
+<script type="module">
+    import { Vue, UiPlugin, Quaternion, Emitter, Backend } from '/lib-qmt/lib-qmt.js'
+
+    const BasicDemo = Vue.defineComponent({
+        template: `
+            <p>
+                UiButton:
+                <UiButton variant="danger" title="do not push" @click="buttonPress"><i class="bi-exclamation-triangle-fill"></i> Do Not Push!</UiButton>
+            </p>
+            <p>
+                <UiCheckbox inline v-model="checked">UiCheckbox</UiCheckbox>
+                (state: {{ checked }})
+            </p>
+            <p>
+                <UiCheckbox toggle inline>UiCheckbox with toggle flag</UiCheckbox>
+            </p>
+            <p>
+                UiDropdown (current value: {{ dropdownValue }}):
+                <UiDropdown v-model="dropdownValue" :options="['first option', 'second option', 'third option']" />
+            </p>
+            <p>
+                UiDropdownMenu:
+                <UiDropdownMenu>
+                    <UiCheckbox class="ms-3 me-3">some checkbox in dropdown menu</UiCheckbox>
+                </UiDropdownMenu>
+            </p>
+            <p>UiInfoTooltipIcon: <UiInfoTooltipIcon tooltip="tooltip <i>with</i> <b>HTML support</b>" /></p>
+        `,
+        data() {
+            return {
+                checked: false,
+                dropdownValue: "second option",
+            }
+        },
+        methods: {
+            buttonPress() {
+                window.location = 'https://www.youtube.com/watch?v=FAciZRkOKQs'
+            }
+        }
+    })
+
+    const SplitterDemo = Vue.defineComponent({
+        template: `
+            <UiSplitter direction="horizontal" :sizes="[20, 60, 20]" :fixed="fixed">
+                <template #first>
+                    <div class="container mt-3">
+                        <p>left</p>
+                    </div>
+                </template>
+                <template #second>
+                    <UiSplitter v-model:sizes="sizes" :fixed="fixed" :direction="vertical ? 'vertical' : 'horizontal'">
+                        <template #first>
+                            <div class="container pt-3">
+                                <p><label class="form-check-label"><input type="checkbox" class="form-check-input" v-model="fixed"> Fixed splitters</label></p>
+                                <p><label class="form-check-label"><input type="checkbox" class="form-check-input" v-model="vertical"> Vertical inner splitter</label></p>
+                                <p>Sizes of inner splitter: {{ sizes }}</p>
+                            </div>
+                        </template>
+                        <template #second>
+                            Use <code>html, body, #app { height: 100%; }</code> for full height webapps.
+                        </template>
+                    </UiSplitter>
+
+                </template>
+                <template #third>
+                    <div class="container mt-3">
+                        <p>right</p>
+                    </div>
+                </template>
+            </UiSplitter>
+        `,
+        data() {
+            return {
+                fixed: false,
+                vertical: true,
+                sizes: [70, 30],
+            }
+        },
+    })
+
+    const SliderDemo = Vue.defineComponent({
+        template: `
+            <p>Single value:</p>
+            <UiSlider
+                ref="valSlider"
+                class="mb-3"
+                style="width: 100%; max-width: 700px"
+                v-model="value"
+                :ticks="[0, 25, 50, 75, 100]"
+            />
+            <p>Range slider:</p>
+            <UiSlider
+                ref="rangeSlider"
+                style="width: 100%; max-width: 700px"
+                v-model="range"
+                :ticks="[0, 25, 50, 75, 100]"
+                :options="{ticks_labels: [0, 25, 50, 75, 100]}"
+            />
+            <p class="mt-4">UiQuatEulerSliders:  (value: [{{ quat.array.map(v => v.toFixed(3)).join(", ") }}])</p>
+            <div class="card">
+                <div class="card-body">
+                <UiQuatEulerSliders v-model="quat" mode="Quaternion" ref="quatEulerSliders" />
+                </div>
+            </div>
+            <p class="mt-3">UiVectorSliders: (value: {{ vec }})</p>
+            <div class="card">
+                <div class="card-body">
+                <UiVectorSliders v-model="vec" mode="Quaternion" ref="vectorSliders"  />
+                </div>
+            </div>
+            <p class="mt-3">UiOriEstParamsOriEstIMU (and other UiOriEstParams components):</p>
+            <div class="card">
+                <div class="card-body">
+                <UiOriEstParamsOriEstIMU v-model="oriEst" ref="oriEstSliders"  />
+                </div>
+            </div>
+        `,
+        data() {
+            return {
+                value: 42,
+                range: [20, 80],
+                quat: Quaternion.random(),
+                vec: [0.8, -0.6, 0],
+                oriEst: {},
+            }
+        },
+        methods: {
+            init() {
+                // Calling relayout() is unfortunately necessary when sliders are initially hidden.
+                // (Note: This might not be necessary any more...)
+                this.$refs.valSlider.relayout()
+                this.$refs.rangeSlider.relayout()
+                this.$refs.quatEulerSliders.relayout()
+                this.$refs.vectorSliders.relayout()
+            }
+        }
+    })
+
+    // simple dummy data source for UiIMUScene
+    class DummySource extends Emitter {
+        constructor() {
+            super()
+            this.t = 0
+            setInterval(() => {
+                this.t += 0.04
+                const quat = Quaternion.fromAngleAxis(2*this.t, [-1, 0.5, -0.8])
+                this.emit('sample', {t: this.t, quat})
+
+            }, 40)
+        }
+    }
+
+    const IMUSceneDemo = Vue.defineComponent({
+        template: `
+            <UiIMUScene :source="source" />
+            <p>(The <code>source</code> is usually a <code>Backend</code> instance. For general 3D scenes, use <code>UiRenderCanvas</code> together with a subclass of the <code>Scene</code> class.</p>
+        `,
+        data() {
+            return {
+                source: new DummySource(),
+            }
+        },
+    })
+
+    const LinePlotDemo = Vue.defineComponent({
+        template: `
+            <UiLinePlot
+                :source="source"
+                :signals="['quat.w', 'quat.x', 'quat.y', 'quat.z']"
+                :labels="['w', 'x', 'y', 'z']"
+                :ylim="[-1, 1]"
+            />
+        `,
+        data() {
+            return {
+                source: new DummySource(),
+            }
+        },
+    })
+
+    const app = Vue.createApp({
+        template: `
+            <div class="container mt-3">
+                <h1>UI Gallery for qmt Webapps</h1>
+                <p>This demo is meant to showcase the different available UI components.</p>
+                <UiPanel
+                    title="Basic UI Elements" collapsed
+                    infoTooltip="This UiPanel has a info tooltip and a custom element in the header."
+                >
+                    <template #header><span class="badge bg-secondary">Click on headers to expand!</span></template>
+                    <template #default><BasicDemo /></template>
+                </UiPanel>
+                <UiPanel title="UiSplitter" collapsed><SplitterDemo style="height: 400px" /></UiPanel>
+                <UiPanel title="UiSlider" collapsed @firstShow="$refs.sliderDemo.init()"><SliderDemo ref="sliderDemo" /></UiPanel>
+                <UiPanel title="UiIMUScene" collapsed><IMUSceneDemo /></UiPanel>
+                <UiPanel title="UiLinePlot" collapsed><LinePlotDemo /></UiPanel>
+                <UiPanel title="Components that are also available, but not included in this gallery" collapsed>
+                    <ul>
+                        <li>UiFullBodyCameraTools</li>
+                        <li>UiFullBodySignalSelection</li>
+                        <li>UiHeadingCorrectionPlot</li>
+                        <li>UiKinematicChainDebugControls &ndash; for use with <code>BoxModel</code>; see the sidebar of <code>/view/boxmodel</code></li>
+                        <li>UiPlaybackControls</li>
+                        <li>UiRecordButton</li>
+                        <li>UiWebcamVideo</li>
+                    </ul>
+                </UiPanel>
+            </div>
+        `,
+        components: {
+            BasicDemo,
+            SplitterDemo,
+            SliderDemo,
+            IMUSceneDemo,
+            LinePlotDemo,
+        },
+    })
+    app.use(UiPlugin)
+    const vm = app.mount('#app')
+    window.app = app
+    window.vm = vm
+</script>
+
+</body>
+</html>

@@ -22,10 +22,12 @@ from Cython.Build import cythonize
 import numpy as np
 
 # workaround for develop mode (pip install -e) with PEP517/pyproject.toml cf. https://github.com/pypa/pip/issues/7953
-site.ENABLE_USER_SITE = "--user" in sys.argv[1:]
+site.ENABLE_USER_SITE = '--user' in sys.argv[1:]
 
 ext_modules = cythonize([
-    "qmt/cpp/dummy.pyx",
+    'qmt/cpp/oriestimu.pyx',
+    'qmt/cpp/madgwick.pyx',
+    'qmt/cpp/quaternion.pyx',
 ])
 
 for m in ext_modules:
@@ -33,10 +35,10 @@ for m in ext_modules:
 
 setup(
     name='qmt',
-    version='0.0.1',
+    version='0.1.0',
 
-    description='This is a dummy repo for testing. Real code coming soon.',
-    long_description=open('README.rst').read(),
+    description='Quaternion-based Inertial Motion Tracking Toolbox',
+    long_description=open('README.rst', encoding='utf-8').read(),
     long_description_content_type="text/x-rst",
     url='https://github.com/dlaidig/qmt/',
     project_urls={
@@ -47,7 +49,7 @@ setup(
     author_email='laidig@control.tu-berlin.de',
     license='MIT',
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3',
@@ -59,12 +61,18 @@ setup(
 
     install_requires=['numpy', 'scipy', 'matplotlib', 'PyYAML',
                       'transplant>=0.8.11',  # 0.8.11 fixes https://github.com/bastibe/transplant/issues/81
-                      'aiohttp', 'ipython', 'notebook',
-                      'aiofiles', 'orjson'],
+                      'aiohttp>=3.8.1', 'ipython', 'notebook', 'aiofiles', 'orjson', 'qasync'],
     extras_require={
         # pip3 install --user -e ".[dev]"
-        'dev': ['pytest', 'pytest-flake8', 'reuse', 'Cython', 'sphinx', 'recommonmark', 'sphinx-rtd-theme',
-                'sphinxcontrib-matlabdomain'],
+        'dev': ['PySide2', 'pytest', 'pytest-flake8', 'flake8<4',  # https://github.com/tholo/pytest-flake8/issues/81
+                'reuse', 'Cython', 'sphinx', 'recommonmark', 'sphinx-rtd-theme', 'sphinxcontrib-matlabdomain'],
+        'gui': ['PySide2'],
+    },
+
+    entry_points={
+        'console_scripts': [
+            'qmt-webapp = qmt.utils.webapp_cli:main',
+        ],
     },
 
     ext_modules=ext_modules,

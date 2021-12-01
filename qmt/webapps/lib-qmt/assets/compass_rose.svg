@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns:svg="http://www.w3.org/2000/svg" xmlns:ns1="http://sozi.baierouge.fr" xmlns:xlink="http://www.w3.org/1999/xlink" id="svg3015" sodipodi:docname="Compass-Rose-BW.svg" viewBox="0 0 317 317" width="150mm" height="150mm" version="1.1" inkscape:version="0.48.1 r9760">
+  <title id="title3013">Compass Rose</title>
+  <sodipodi:namedview id="base" bordercolor="#666666" inkscape:pageshadow="2" inkscape:window-y="26" fit-margin-left="2" pagecolor="#ffffff" inkscape:window-height="1024" inkscape:window-maximized="0" inkscape:zoom="2.8" inkscape:window-x="918" showgrid="false" borderopacity="1.0" inkscape:current-layer="layer1" inkscape:cx="133.92857" inkscape:cy="136.06639" fit-margin-top="2" fit-margin-right="2" fit-margin-bottom="2" inkscape:window-width="1000" inkscape:pageopacity="0.0" inkscape:document-units="px"/>
+  <g id="layer1" inkscape:label="Layer 1" inkscape:groupmode="layer" transform="translate(2.5,2.5)">
+    <g id="ring">
+      <path id="inner-line" sodipodi:rx="72" sodipodi:ry="72" style="stroke:#000000;stroke-width:.25;fill:none" sodipodi:type="arc" d="m228 156a72 72 0 1 1 -144 0 72 72 0 1 1 144 0z" sodipodi:cy="156" sodipodi:cx="156"/>
+      <path id="outer-line" sodipodi:rx="96" sodipodi:ry="96" style="stroke:#000000;stroke-width:.25;fill:none" sodipodi:type="arc" d="m252 156a96 96 0 1 1 -192 0 96 96 0 1 1 192 0z" sodipodi:cy="156" sodipodi:cx="156"/>
+      <path id="ring-fill" style="stroke:#000000;stroke-width:.25;fill:#000000" inkscape:connector-curvature="0" d="m156 60c-53.019 0-96 42.981-96 96s42.981 96 96 96 96-42.981 96-96-42.981-96-96-96zm0 24c39.764 0 72 32.236 72 72s-32.236 72-72 72-72-32.236-72-72 32.236-72 72-72z"/>
+    </g>
+    <g id="major-rose-edge" style="stroke:#ffffff;fill:none">
+      <path id="highlight-north" d="m156 156 24-24-24-132" style="stroke:#ffffff;fill:none" inkscape:connector-curvature="0"/>
+      <path id="highlight-east" style="stroke:#ffffff;fill:none" inkscape:connector-curvature="0" d="m156 156 24 24 132-24"/>
+      <path id="highlight-south" style="stroke:#ffffff;fill:none" inkscape:connector-curvature="0" d="m156 156-24 24 24 132"/>
+      <path id="highlight-west" d="m156 156-24-24-132 24" style="stroke:#ffffff;fill:none" inkscape:connector-curvature="0"/>
+    </g>
+    <g id="minor-rose">
+      <g id="light-minor" style="stroke:#000000;stroke-width:.25;fill:#ffffff">
+        <path id="light-northeast" style="stroke:#000000;stroke-width:.25;fill:#ffffff" inkscape:connector-curvature="0" d="m156 156 48-48-48 23"/>
+        <path id="light-southeast" d="m156 156 48 48-23-48" style="stroke:#000000;stroke-width:.25;fill:#ffffff" inkscape:connector-curvature="0"/>
+        <path id="light-southwest" style="stroke:#000000;stroke-width:.25;fill:#ffffff" inkscape:connector-curvature="0" d="m156 156-48 48 48-23"/>
+        <path id="light-northwest" d="m156 156-48-48 23 48" style="stroke:#000000;stroke-width:.25;fill:#ffffff" inkscape:connector-curvature="0"/>
+      </g>
+      <g id="dark-minor" style="fill:#000000">
+        <path id="dark-northeast" d="m156 156 48-48-23 48" inkscape:connector-curvature="0"/>
+        <path id="dark-southeast" inkscape:connector-curvature="0" d="m156 156 48 48-48-23"/>
+        <path id="dark-southwest" d="m156 156-48 48 23-48" inkscape:connector-curvature="0"/>
+        <path id="dark-northwest" inkscape:connector-curvature="0" d="m156 156-48-48 48 23"/>
+      </g>
+    </g>
+    <g id="major-rose">
+      <g id="light-major" style="stroke:#000000;stroke-width:.25;fill:#ffffff">
+        <path id="light-north" d="m156 156-24-24 24-132" style="stroke:#000000;stroke-width:.25;fill:#ffffff" inkscape:connector-curvature="0"/>
+        <path id="light-east" style="stroke:#000000;stroke-width:.25;fill:#ffffff" inkscape:connector-curvature="0" d="m156 156 24-24 132 24"/>
+        <path id="light-south" style="stroke:#000000;stroke-width:.25;fill:#ffffff" inkscape:connector-curvature="0" d="m156 156 24 24-24 132"/>
+        <path id="light-west" d="m156 156-24 24-132-24" style="stroke:#000000;stroke-width:.25;fill:#ffffff" inkscape:connector-curvature="0"/>
+      </g>
+      <g id="dark-major" style="fill:#000000">
+        <path id="dark-north" inkscape:connector-curvature="0" d="m156 156 24-24-24-132"/>
+        <path id="dark-east" d="m156 156 24 24 132-24" inkscape:connector-curvature="0"/>
+        <path id="dark-south" d="m156 156-24 24 24 132" inkscape:connector-curvature="0"/>
+        <path id="dark-west" inkscape:connector-curvature="0" d="m156 156-24-24-132 24"/>
+      </g>
+    </g>
+  </g>
+  <metadata>
+    <rdf:RDF>
+      <cc:Work>
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+        <cc:license rdf:resource="http://creativecommons.org/licenses/publicdomain/"/>
+        <dc:publisher>
+          <cc:Agent rdf:about="http://openclipart.org/">
+            <dc:title>Openclipart</dc:title>
+          </cc:Agent>
+        </dc:publisher>
+        <dc:title>Compass Rose B&amp;W</dc:title>
+        <dc:date>2011-06-05T02:00:31</dc:date>
+        <dc:description>Black and white version of compass rose.</dc:description>
+        <dc:source>https://openclipart.org/detail/142441/compass-rose-bw-by-serioustux</dc:source>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>SeriousTux</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:subject>
+          <rdf:Bag>
+            <rdf:li>b&amp;w</rdf:li>
+            <rdf:li>black and white</rdf:li>
+            <rdf:li>cartography</rdf:li>
+            <rdf:li>compass</rdf:li>
+            <rdf:li>compass rose</rdf:li>
+            <rdf:li>map</rdf:li>
+          </rdf:Bag>
+        </dc:subject>
+      </cc:Work>
+      <cc:License rdf:about="http://creativecommons.org/licenses/publicdomain/">
+        <cc:permits rdf:resource="http://creativecommons.org/ns#Reproduction"/>
+        <cc:permits rdf:resource="http://creativecommons.org/ns#Distribution"/>
+        <cc:permits rdf:resource="http://creativecommons.org/ns#DerivativeWorks"/>
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+</svg>

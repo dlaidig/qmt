@@ -2,3 +2,17 @@ Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: qmt
 Upstream-Contact: Daniel Laidig <laidig@control.tu-berlin.de>
 Source: https://github.com/dlaidig/qmt
+
+Files: docs/images/webapp-*.png
+Copyright: 2021 Daniel Laidig <laidig@control.tu-berlin.de>
+License: MIT
+
+# code from https://github.com/frols88/sensor-to-segment
+Files: qmt/matlab/lib/JointAxisEstHingeOlsson/*
+Copyright: 2021 Fredrik Olsson <fredrik.olsson@it.uu.se>
+License: LicenseRef-Unspecified
+
+# code from https://x-io.co.uk/open-source-imu-and-ahrs-algorithms/
+Files: qmt/cpp/madgwick_src/*.cpp qmt/cpp/madgwick_src/*.hpp qmt/cpp/madgwick_src/original_downloads/*.c qmt/cpp/madgwick_src/original_downloads/*.zip
+Copyright: 2011 Sebastian O.H. Madgwick
+License: LicenseRef-Unspecified

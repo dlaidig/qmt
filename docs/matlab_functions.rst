@@ -5,8 +5,23 @@
 Matlab data processing functions
 ================================
 
+Basic quaternion functions
+--------------------------
+
 .. mat:module:: .
 
 .. mat:automodule:: +qmt
 
-.. mat:autofunction:: matlabDummy
+.. mat:autofunction:: qmult
+
+
+Heading correction functions
+----------------------------
+
+.. mat:autofunction:: headingCorrection
+
+
+Joint estimation functions
+--------------------------
+
+.. mat:autofunction:: jointAxisEstHingeOlsson

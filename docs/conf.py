@@ -7,13 +7,14 @@
 import os
 
 project = 'qmt'
-copyright = '2021, CSG'
-author = 'CSG'
+copyright = '2021, Daniel Laidig'
+author = 'Daniel Laidig'
 
 extensions = [
     'recommonmark',
     'sphinx_rtd_theme',
     'sphinx.ext.autodoc',
+    'sphinx.ext.autosummary',
     'sphinx.ext.doctest',
     'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
@@ -29,7 +30,7 @@ html_theme = 'sphinx_rtd_theme'
 html_theme_options = {
     'navigation_depth': 4,
 }
-html_favicon = 'images/favicon.ico'
+html_favicon = '../qmt/webapps/lib-qmt/favicon.ico'
 # html_static_path = ['_static']
 plot_pre_code = '''
 import numpy as np

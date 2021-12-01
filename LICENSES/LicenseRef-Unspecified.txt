@@ -1,0 +1,7 @@
+This repository contains code, typically released together with scientific
+publications, for which the original authors did not provide any licensing
+information. We distribute this code under the assumption that authors who
+publish code for the scientific community intend for the code to be used for
+scientific research. All such files are marked with the SPDX license identifier
+LicenseRef-Unspecified and the origin of the code is documented in the
+respective files or directories.

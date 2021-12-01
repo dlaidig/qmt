@@ -2,8 +2,24 @@
 #
 # SPDX-License-Identifier: MIT
 
+__pycache__
+*.html~
+.ipynb_checkpoints/
+CMakeLists.txt.user
+/.idea/
+
+/*.egg-info/
 /build/
-/qmt.egg-info/
-__pycache__/
-/qmt/cpp/dummy.cpp
+/docs/_build/
+dist/
+node_modules/
+
 /qmt/cpp/*.so
+/qmt/cpp/*.cpp
+/qmt/cpp/*_src/*.so
+/qmt/cpp/build-*/
+
+/qmt/webapps/demo/*/package-lock.json
+/qmt/webapps/view/*/package-lock.json
+
+/examples/example_output/

@@ -2,12 +2,61 @@
 ..
 .. SPDX-License-Identifier: MIT
 
-qmt dummy repo
-==============
+qmt -- IMU motion tracking toolbox
+==================================
 
 |tests| |build| |docs| |version| |python| |format| |license| |downloads|
 
-This is a dummy repo for testing. Real code coming soon.
+The `qmt` toolbox (Quaternion-based Inertial Motion Tracking Toolbox) is a collection of functions, algorithms,
+visualization tools, and other utilities with a focus on IMU-based motion tracking.
+
+Documentation
+-------------
+
+Detailed documentation can be found online at https://qmt.readthedocs.io/.
+
+Installation
+------------
+
+The qmt Python package can easily be installed from PyPI via pip, e.g.:
+
+.. code-block:: sh
+
+    pip install qmt
+
+To also install the `PySide2 <https://pypi.org/project/PySide2/>`_ package that is needed to run webapps in a custom
+window, use the extra ``gui`` specifier: ``pip install "qmt[gui]"``. If installing PySide2 via PyPI is not supported for
+your architecture, you can either find other ways to install it (e.g.,
+`brew <https://formulae.brew.sh/formula/pyside@2>`_) or use the Chromium browser window fallback.
+
+To install the toolbox from source, run:
+
+.. code-block:: sh
+
+    ./build_webapp_lib.sh
+    pip install --user -e ".[dev]"
+    ./build_docs.sh
+
+For more information, please refer to the `documentation <https://qmt.readthedocs.io/>`_.
+
+License
+-------
+
+The qmt toolbox is licensed under the terms of the `MIT license <https://spdx.org/licenses/MIT.html>`__.
+
+`SPDX <https://spdx.dev/specifications/>`__ headers and the `REUSE <https://reuse.software/>`__ specification are used
+to track authors and licenses of all files in this repository.
+
+This repository also contains code, typically released together with scientific publications, for which the original
+authors did not provide any licensing information. We distribute this code under the assumption that authors who
+publish code for the scientific community intend for the code to be used for scientific research. All such files are
+marked with the SPDX license identifier LicenseRef-Unspecified and the origin of the code is documented in the
+respective files or directories.
+
+Contact
+-------
+
+Daniel Laidig <laidig at control.tu-berlin.de>
 
 
 .. |tests| image:: https://img.shields.io/github/workflow/status/dlaidig/qmt/Tests?label=tests

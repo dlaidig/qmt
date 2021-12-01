@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<!--
+SPDX-FileCopyrightText: 2021 Bo Yang <b.yang@campus.tu-berlin.de>
+
+SPDX-License-Identifier: MIT
+-->
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html" charset="utf-8"/>
+    <title>Full Body Motion Tracking</title>
+    <link rel="stylesheet" href="/lib-qmt/style.css">
+    <style>
+        html, body, #app {
+            height: 100%;
+        }
+
+        #playbackControls {
+            position: absolute;
+            bottom: 1em;
+            left: 1em;
+            width: calc(100% - 2em);
+        }
+
+        #debugButton {
+            position: absolute;
+            top: 1em;
+            right: 1em;
+        }
+        #utilsButton {
+            position: absolute;
+            top: 4em;
+            right: 1em;
+        }
+    </style>
+</head>
+<body>
+<div id="app"></div>
+<script type="module">
+    import { _, Vue, UiPlugin, Backend, BABYLON, Scene, BoxModel, deg2rad, rad2deg, vecNorm, COLORS } from '/lib-qmt/lib-qmt.js'
+
+    class MainScene extends Scene {
+        constructor(canvas) {
+            super(canvas)
+            this.createScene()
+        }
+
+        createScene() {
+            this.camera = new BABYLON.ArcRotateCamera('camera', deg2rad(20), deg2rad(70), 100, new BABYLON.Vector3(0, 12, 0), this.scene)
+
+            this.camera.attachControl(true)
+            this.camera.parent = this.cameraTransform
+
+            this.light1 = new BABYLON.HemisphericLight('light1', new BABYLON.Vector3(1, 1, 2), this.scene)
+            this.light2 = new BABYLON.HemisphericLight('light2', new BABYLON.Vector3(-1, -1, -2), this.scene)
+            this.scene.clearColor = new BABYLON.Color4(0.9, 0.9, 0.9)
+            this.boxmodel = null
+        }
+
+        setConfig(config) {
+            if (this.boxmodel !== null) {
+                this.scene.boxmodel.dispose()
+            }
+            this.boxmodel = new BoxModel(this.scene, config)
+            this.boxmodel.position = this.boxmodel.config.position ?? [-8, 0, 15]
+            this.emit('config', this.boxmodel.config.segments)
+
+            this.boxmodel.pickable = true
+            this.boxmodel.on('pick', name => this.emit('pick', name))
+            this.boxmodel.on('sample', sample => this.emit('sample', sample))
+
+            // an additional reference model, hidden by default
+            this.refBoxmodel = new BoxModel(this.scene, config)
+            this.refBoxmodel.position = this.boxmodel.config.position ?? [-8, 25, 15]
+            this.refBoxmodel.pickable = false
+            this.refBoxmodel.setColor('all', COLORS.darkgrey)
+            this.refBoxmodel.setOpacity('all', 0)
+            this.refBoxmodel.setEdges('all', false)
+            this.refBoxmodel.setImuVisibility('all', 0)
+        }
+
+        onSample(sample) {
+            if (this.boxmodel === null)
+                return
+            this.boxmodel.onSample(sample)
+
+            if (this.refBoxmodel) {
+                this.refBoxmodel.onSample(sample)
+            }
+        }
+    }
+
+    const OriEst = Vue.defineComponent({
+        template: `
+            <UiPanel title="Orientation Estimation "  class="mt-3">
+                <div class="ms-2" style="display: grid;  column-gap: 0.5em; row-gap: 0.5em">
+                    <UiSlider v-model="value.tauAcc" labelWidth="5em" :valueLabel="v => v" valueLabelWidth="3em"
+                        :options="{min: 0, max: 100, step: 0.01, ticks: [0, 1, 100],
+                        ticks_snap_bounds: 0.1, precision: 1, scale:'logarithmic'}">
+                        <template #label>τ<sub>acc</sub></template>
+                    </UiSlider>
+                    <UiSlider v-model="value.zeta" labelWidth="5em" :valueLabel="v => v" valueLabelWidth="3em"
+                        :options="{min: 0, max: 10, step: 0.1, ticks: [0, 1, 5, 10]}">
+                        <template #label>ζ<sub>bias</sub></template>
+                    </UiSlider>
+                    <UiSlider v-model="value.accRating" labelWidth="5em" :valueLabel="v => v" valueLabelWidth="3em"
+                        :options="{min: 0, max: 5, step: 0.1, ticks: [0, 1, 2, 3, 4, 5]}">
+                        <template #label>r<sub>acc</sub></template>
+                    </UiSlider>
+                </div>
+            </UiPanel>
+        `,
+        props: {
+            modelValue: {
+                type: Object,
+                default() {
+                    return {
+                        tauAcc: 1,
+                        zeta: 0,
+                        accRating: 1,
+                    }
+                },
+            },
+        },
+        data() {
+            return {
+                value: this.modelValue
+            }
+        },
+        methods: {
+            update() {
+                this.$emit('update:modelValue', this.params)
+            },
+        },
+        watch: {
+            value: {
+                    handler(val, oldVal) {
+                        this.$emit('update:modelValue', val)
+                    },
+                    deep: true
+          },
+            modelValue(newValue) {
+                this.value = newValue
+            },
+        },
+    })
+
+    const ResetAlignment = Vue.defineComponent({
+        template: `
+            <UiPanel title="Reset Alignment"  class="mt-3">
+                <div class="ms-2" style="display: grid;  column-gap: 0.5em; row-gap: 0.5em">
+                    <div><strong>Selected axis:</strong> {{ selectedAxis }}, {{ CSText }}</div>
+                    <div class="btn-group" role="group">
+                        <UiButton @click="selectAxis('X')" variant="outline-primary"> X </UiButton>
+                        <UiButton @click="selectAxis('Y')" variant="outline-primary"> Y </UiButton>
+                        <UiButton @click="selectAxis('Z')" variant="outline-primary"> Z </UiButton>
+                    </div>
+                    <UiCheckbox v-show="selectedAxis==='X'" toggle inline v-model="xCsSwitch">Global coordinates</UiCheckbox>
+                    <UiCheckbox v-show="selectedAxis==='Y'" toggle inline v-model="yCsSwitch">Global coordinates</UiCheckbox>
+                    <UiCheckbox v-show="selectedAxis==='Z'" toggle inline v-model="zCsSwitch">Global coordinates</UiCheckbox>
+
+                    <UiVectorSliders v-show="selectedAxis==='X'" v-model="value.x" />
+                    <UiVectorSliders v-show="selectedAxis==='Y'" v-model="value.y" />
+                    <UiVectorSliders v-show="selectedAxis==='Z'" v-model="value.z" />
+
+                    <div><strong>Exact axis:</strong></div>
+                    <UiDropdown v-model="value.exactAxis" :options="['None', 'x', 'y', 'z']" />
+                </div>
+            </UiPanel>
+            `,
+        props: {
+            modelValue: { type: Object },
+        },
+        data() {
+            return {
+                value:  {
+                        x: [0, 0, 0],
+                        y: [0, 0, 0],
+                        z: [0, 0, 0],
+                        exactAxis: null,
+                        xCs: 0,
+                        yCs: 0,
+                        zCs: 0,
+                    },
+                selectedAxis: 'X',
+                exactAxis: null
+            }
+        },
+        methods: {
+            selectAxis(name) {
+                this.selectedAxis = name
+            },
+        },
+        watch: {
+            value: {
+                    handler() {
+                        const params = {
+                            x: this.value.x,
+                            y: this.value.y,
+                            z: this.value.z,
+                            xCs: this.value.xCs,
+                            yCs: this.value.yCs,
+                            zCs: this.value.zCs,
+                            exactAxis: this.value.exactAxis === 'None'? null: this.value.exactAxis
+                        }
+                        this.$emit('update:modelValue', params);
+                    },
+                    deep: true
+                },
+            modelValue() {
+                const params = {
+                    x: _.get(this.modelValue, 'x', [0, 0, 0]),
+                    y: _.get(this.modelValue, 'y', [0, 0, 0]),
+                    z: _.get(this.modelValue, 'z', [0, 0, 0]),
+                    xCs: _.get(this.modelValue, 'xCs', 0),
+                    yCs: _.get(this.modelValue, 'yCs', 0),
+                    zCs: _.get(this.modelValue, 'zCs', 0),
+                }
+                if (_.get(this.modelValue, 'exactAxis') == null){
+                       params.exactAxis = 'None'
+                }
+                else {
+                    params.exactAxis = _.get(this.modelValue, 'exactAxis')
+                }
+
+                if (!_.isEqual(this.value, params)) {
+                    this.value = params
+                }
+            },
+        },
+        computed: {
+            xCsSwitch: {
+                get: function () {
+                    return this.value.xCs === -1
+                },
+                set: function (newValue) {
+                    this.value.xCs = newValue? -1: 0
+                }
+            },
+            yCsSwitch: {
+                get: function () {
+                    return this.value.yCs === -1
+                },
+                set: function (newValue) {
+                    this.value.yCs = newValue? -1: 0
+                }
+            },
+            zCsSwitch: {
+                get: function () {
+                    return this.value.zCs === -1
+                },
+                set: function (newValue) {
+                    this.value.zCs = newValue? -1: 0
+                }
+            },
+            exactAxisSwitch: {
+                get: function () {
+                    return this.value.exactAxis == null ? "None": this.value.exactAxis
+                },
+                set: function (newValue) {
+                    this.value.exactAxis = newValue == null ? "None": newValue
+                }
+            },
+            CSText() {
+                if (this.selectedAxis === 'X') {
+                    return `CS: ${this.value.xCs}`
+                } else if (this.selectedAxis === 'Y') {
+                    return `CS: ${this.value.yCs}`
+                } else {
+                    return `CS: ${this.value.zCs}`
+                }
+            },
+        }
+    })
+    const JointEstimation = Vue.defineComponent({
+        template: `
+           <UiPanel title="Joint Estimation"  class="mt-3">
+                <div class="ms-2" style="display: grid;  column-gap: 0.5em; row-gap: 0.5em">
+                    <UiSlider v-model="value.wa"  label="wa" labelWidth="5.5em" :valueLabel="v => v" valueLabelWidth="3em"
+                              :options="{min: 0.01, max: 1000, step: 0.1, ticks:[3], scale:'logarithmic'}" />
+                    <UiSlider v-model="value.wg" label="wg" labelWidth="5.5em" :valueLabel="v => Math.round(v)" valueLabelWidth="3em"
+                              :options="{min: 0.01, max: 1000, step: 0.1, scale:'logarithmic', ticks: [3]}" />
+                    <UiCheckbox toggle inline v-model="value.useSampleSelection">Sample selection</UiCheckbox>
+                    <UiSlider v-model="value.winSize" label="winSize" labelWidth="5.5em" :valueLabel="v => v" valueLabelWidth="3em"
+                              :options="{min: 1.0, max: 99, step: 2}" />
+                    <UiSlider v-model="value.angRateEnergyThreshold" label="energy" labelWidth="5.5em" :valueLabel="v => v" valueLabelWidth="3em"
+                              :options="{min: 1.0, max: 400, step: 10, ticks: [0, 100, 200, 300, 400],ticks_labels: [0, 100, 200, 300, 400]}" />
+                    <UiSlider v-model="value.dataSize" label="dataSize" labelWidth="5.5em" :valueLabel="v => v" valueLabelWidth="3em"
+                              :options="{min: 100.0, max: 10000, step: 100}" />
+                    <UiCheckbox toggle inline v-model="value.flip" >Flip axis</UiCheckbox>
+                </div>
+           </UiPanel>`,
+        props: {
+            modelValue: { type: Object,
+                default: {
+                    wg: 0,
+                    wa: 0,
+                    winSize: 0,
+                    angRateEnergyThreshold: 0,
+                    dataSize: 0,
+                    useSampleSelection: true,
+                    flip: false,
+                }},
+
+        },
+        data() {
+            return {
+                value: this.modelValue
+            }
+        },
+        methods: {
+            update() {
+                this.$emit('update:modelValue', this.params);
+            },
+        },
+        watch: {
+            value: {
+                    handler(val, oldVal) {
+                        this.$emit('update:modelValue', val)
+                    },
+                    deep: true
+          },
+            modelValue(newValue) {
+                this.value = newValue
+            },
+        },
+    })
+    const ResetHeading = Vue.defineComponent({
+        template: `
+            <UiPanel title="Reset Heading"  class="mt-3">
+                <div class="ms-2" style="display: grid;  column-gap: 0.5em; row-gap: 0.5em">
+                    <UiSlider labelWidth="5em" :valueLabel="v => v" valueLabelWidth="3em"
+                        :options="{min: -180, max: 180,  step: 1, ticks: [-180, -90,  0, 90, 180],
+                        ticks_labels: [-180, -90,  0, 90, 180], ticks_snap_bounds: 4, precision: 1,}" v-model="value">
+                        <template #label>δ<sub>offset</sub></template>
+                    </UiSlider>
+                </div>
+            </UiPanel>
+        `,
+        props: {
+            modelValue: { type: Object,
+                default() {
+                    return {
+                        deltaOffset: 0
+                    }
+                }
+            },
+        },
+        data() {
+            return {
+                value: 0,
+            }
+        },
+        methods: {
+            update() {
+                const rad = deg2rad(this.value)
+                this.$emit('update:modelValue', {deltaOffset: rad})
+            },
+        },
+        watch: {
+            value: {
+                    handler() {
+                        this.update()
+                    },
+                    deep: true
+            },
+            modelValue() {
+                this.value = rad2deg(_.get(this.modelValue, 'deltaOffset', 0))
+            },
+        },
+    })
+    const DeltaCorrection = Vue.defineComponent({
+        template: `
+            <UiPanel title="Delta correction"  class="mt-3">
+                <UiSlider v-model="value.windowTime" labelWidth="5em" :valueLabel="v => Math.round(v)" valueLabelWidth="3em"
+                :options="{min: 0.0, max: 30, step: 0.1,  precision: 1}">
+                    <template #label>t<sub>window</sub></template>
+                </UiSlider>
+                <UiSlider v-model="value.tauBias" labelWidth="5em" :valueLabel="v => v" valueLabelWidth="3em"
+                :options="{min: 0.0, max: 10, step: 0.1}">
+                    <template #label>τ<sub>bias</sub></template>
+                </UiSlider>
+                <UiSlider v-model="value.tauDelta" labelWidth="5em" :valueLabel="v => v" valueLabelWidth="3em"
+                :options="{min: 0.0, max: 10, step: 0.1}">
+                    <template #label>τ<sub>δ</sub></template>
+                </UiSlider>
+                <div><strong>Constraint:</strong></div>
+                <div style="flex-grow: 1" class="ms-2" >
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="inlineRadioOptions" id="1D" value="1D"
+                               v-model="value.constraint">
+                            <label class="form-check-label" for="1D">1D</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="inlineRadioOptions" id="2D" value="2D"
+                               v-model="value.constraint">
+                            <label class="form-check-label" for="2D">2D</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="inlineRadioOptions" id="3D" value="3D"
+                               v-model="value.constraint">
+                            <label class="form-check-label" for="3D">3D</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="inlineRadioOptions" id="null" value="null"
+                               v-model="value.constraint">
+                            <label class="form-check-label" for="null">Disabled</label>
+                    </div>
+                </div>
+                <div v-show="value.constraint !== null">
+                <div><strong> Joint axes:  </strong></div>
+                <div> {{jointParam}} </div>
+                <div v-show="value.constraint==='1D' || value.constraint==='2D'">
+                    <div><strong>Joint axis 1:</strong></div>
+                    <UiVectorSliders  v-model="value.jointAxis1" />
+                </div>
+                <div v-show="value.constraint==='2D'">
+                    <div><strong>Joint axis 2:</strong></div>
+                    <UiVectorSliders   v-model="value.jointAxis2" />
+                </div>
+                <div v-if="value.constraint==='3D'">
+                    <div><strong>Euler Convention: </strong></div>
+                    <UiDropdown v-model="value.convention" :options="modes"/>
+                    <div><strong>Range of motion</strong></div>
+                    <UiSlider id="xSlider"
+                              v-model="value.rangex"
+                              ref="rangeSlider"
+                              label="x" labelWidth="3em"
+                    :options="{min: -180, max: 180, step: 1.0, ticks: [-180, -90, 0, 90, 180],
+                    ticks_labels: [-180, -90, 0, 90, 180],  ticks_snap_bounds: 3, precision: 1}" />
+                    <UiSlider id="ySlider"
+                              v-model="value.rangey"
+                              ref="rangeSlider"
+                              label="y" labelWidth="3em"
+                    :options="{min: -180, max: 180, step: 1.0, ticks: [-180, -90, 0, 90, 180],
+                    ticks_labels: [-180, -90, 0, 90, 180],  ticks_snap_bounds: 3, precision: 1}" />
+                    <UiSlider id="zSlider"
+                              v-model="value.rangez"
+                              ref="rangeSlider"
+                              label="z" labelWidth="3em"
+                    :options="{min: -180, max: 180, step: 1.0, ticks: [-180, -90, 0, 90, 180],
+                    ticks_labels: [-180, -90, 0, 90, 180],  ticks_snap_bounds: 3, precision: 1}" />
+                </div>
+                </div>
+            </UiPanel>
+        `,
+        props: {
+           modelValue: { type: Object },
+
+        },
+        data() {
+            return {
+                modes: [ 'xyz', 'zyx', 'zxy', 'yxz', 'yzx', 'zxy', 'zxz', 'zyz', 'yxy', 'yzy', 'xyx', 'xzx'],
+                value:{
+                    constraint: null,
+                    jointAxis1: [0, 0, 0],
+                    jointAxis2: [0, 0, 0],
+                    rangex: [-180, 180],
+                    rangey: [-180, 180],
+                    rangez: [-180, 180],
+                    convention: 'xyz',
+                    windowTime: 8,
+                    tauDelta: 5,
+                    tauBias: 5,
+                }
+            }
+        },
+
+        methods: {
+            update() {
+
+                if (!_.isEqual(this.assembleParams, this.modelValue)) {
+                    this.$emit('update:modelValue', this.assembleParams)
+                }
+            },
+
+            getJointDimension(joint) {
+                // determine 1D/2D/3D
+                if (joint == null) {
+                    return null
+                }
+                else if (joint.every(entry => !Array.isArray(entry))) {
+                    // One dimensional
+                    return '1D';
+                }
+                else if (joint.length === 2) {
+                    // Has at least one entry that is an array
+                    return '2D';
+                }
+                else {
+                    return "3D";
+                }
+            },
+            getJointInfo(info) {
+                // get angle ranges in deg and convention as Object: jointInfo
+                const ranges = info['angle_ranges']
+                if (!ranges) {
+                    return null
+                }
+                const jointInfo = {convention: info['convention']}
+                for (let i = 0; i < 2; i++) {
+                    jointInfo.rangex = [rad2deg(ranges[0][0]), rad2deg(ranges[0][1])]
+                    jointInfo.rangey = [rad2deg(ranges[1][0]), rad2deg(ranges[1][1])]
+                    jointInfo.rangez = [rad2deg(ranges[2][0]), rad2deg(ranges[2][1])]
+                }
+                return jointInfo
+            },
+            getJoint(joint) {
+                // make sure input joint is array
+                if (typeof joint === 'object' && joint !== null) {
+                    return [joint[0], joint[1], joint[2]]
+                }
+                return joint
+            }
+        },
+        watch: {
+            modelValue() {
+                // load params to value when new props given
+
+                const joint = _.get(this.modelValue, 'joint')
+                const joint_info = _.get(this.modelValue, 'joint_info', {})
+                const est_settings = _.get(this.modelValue, 'est_settings', {})
+                let params = {}
+                const constraint = this.getJointDimension(joint)
+
+                params.constraint = constraint
+                if (constraint === '1D') {
+                    params.jointAxis1 = this.getJoint(joint)
+                } else if (constraint === '2D') {
+                    params.jointAxis1 = this.getJoint(joint[0])
+                    params.jointAxis2 = this.getJoint(joint[1])
+                } else if (constraint === '3D') {
+                    const info = this.getJointInfo(joint_info)
+                    params.convention = info.convention
+                    params.rangex = info.rangex
+                    params.rangey = info.rangey
+                    params.rangez = info.rangez
+                }
+                params = {...{windowTime: 8, tauDelta: 5, tauBias: 5,}, ...est_settings, ...params}
+                this.value = params
+               },
+
+            value: {
+                handler() {
+                    this.update()
+                },
+                deep: true
+            },
+        },
+        computed: {
+            jointParam() {
+                // assemble joint as Array to emitted
+                if (this.value.constraint === '1D') {
+                    return [this.value.jointAxis1[0], this.value.jointAxis1[1], this.value.jointAxis1[2]]
+                } else if (this.value.constraint === '2D') {
+                    return [[this.value.jointAxis1[0], this.value.jointAxis1[1], this.value.jointAxis1[2]],
+                        [this.value.jointAxis2[0], this.value.jointAxis2[1], this.value.jointAxis2[2]]]
+                } else {
+                    return [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+                }
+            },
+            jointInfoParam() {
+                // assemble jointInfoParam as Object with convention & angle_ranges to emitted
+                if (this.value.constraint !== '3D') {
+                    return {}
+                }
+                const _table = {
+                    x: this.value.rangex,
+                    y: this.value.rangey,
+                    z: this.value.rangez
+                };
+                const ranges = []
+                for (const i of this.value.convention) {
+                    ranges.push([deg2rad(_table[i][0]), deg2rad(_table[i][1])])
+                }
+                return {
+                    angle_ranges: ranges,
+                    convention: this.value.convention,
+                }
+            },
+            estSettingsParams() {
+                return {
+                    windowTime: this.value.windowTime,
+                    tauDelta: this.value.tauDelta,
+                    tauBias: this.value.tauBias,
+                }
+            },
+            assembleParams() {
+                if (!this.value.constraint) {
+                    return {}
+                }
+                return {
+                    joint: this.jointParam,
+                    joint_info: this.jointInfoParam,
+                    est_settings: this.estSettingsParams
+                }
+            }
+        },
+    })
+
+    const InteractiveTuning = Vue.defineComponent({
+        template: `
+            <UiPanel title="Interactive Parameter Tuning" class="mt-3" collapsed>
+                <OriEst collapsed title="Orientation Estimation" v-model="oriEst" />
+                <ResetAlignment collapsed title="Reset Alignment" v-model="resetAlignmentSettings" />
+                <JointEstimation collapsed title="Joint Estimation" v-model="jointEstSettings" />
+                <ResetHeading collapsed title="Heading Reset" v-model="resetHeadingSettings" />
+                <DeltaCorrection collapsed title="Heading Correction" v-model="deltaCorrectionSettings" />
+                <UiButton @click="send" variant="outline-primary">
+                    <span v-if="updating"><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Updating...</span>
+                    <span v-else><i class="bi bi-arrow-down-up"></i> Reprocess Data</span>
+                </UiButton>
+            </UiPanel>`,
+        props: {
+            scene: Object,
+            config: Object,
+            backend: Object,
+            signals: { Object, default: {
+                    defaultSettings: 'defaultSettings',
+                    orientationEstimation: 'oriEst',
+                    resetAlignmentSettings: 'resetAlignmentSettings',
+                    resetHeadingSettings: 'resetHeadingSettings',
+                    jointEstSettings: 'jointEstSettings',
+                    deltaCorrectionSettings: 'deltaCorrectionSettings',
+                }
+            }
+        },
+        components: {
+            OriEst,
+            ResetAlignment,
+            JointEstimation,
+            ResetHeading,
+            DeltaCorrection,
+        },
+        data() {
+            return {
+                selectedSegment: null,
+                segmentList: [],
+                defaultParams: {},
+
+                params: {},
+                oriEst: {},
+                resetAlignmentSettings: {},
+                jointEstSettings: {},
+                resetHeadingSettings: {},
+                deltaCorrectionSettings: {},
+
+                updating: false,
+            }
+        },
+        mounted() {
+            this.scene.on('pick', name => {
+                if (this.selectedSegment === name)
+                    this.selectedSegment = null
+                else
+                    this.selectedSegment = name
+            })
+            this.backend.on('data', () => {this.updating = false})
+            this.segmentList = this.scene.boxmodel.segmentNames
+            this.updateDefault()
+        },
+
+        methods: {
+            getSelectedSegment() {
+                if (this.segmentList.includes(this.selectedSegment)) {
+                    return this.scene.boxmodel.segments[this.selectedSegment]
+                }
+                // return null
+            },
+            updateDefault() {
+                for (let segment of this.segmentList) {
+                    this.defaultParams[segment] = {
+                        oriEst: _.get(this.config, [this.signals.defaultSettings, segment, this.signals.orientationEstimation]),
+                        resetAlignmentSettings: _.get(this.config, [this.signals.defaultSettings, segment, this.signals.resetAlignmentSettings]),
+                        jointEstSettings: _.get(this.config, [this.signals.defaultSettings, segment, this.signals.jointEstSettings]),
+                        resetHeadingSettings: _.get(this.config, [this.signals.defaultSettings, segment, this.signals.resetHeadingSettings]),
+                        deltaCorrectionSettings: _.get(this.config, [this.signals.defaultSettings, segment, this.signals.deltaCorrectionSettings])
+                    }
+                }
+                this.params = _.cloneDeep(this.defaultParams)
+            },
+            send() {
+                this.updating = true
+                const params = _.cloneDeep(this.params)
+                for (let seg in params) { // remove default values to make it easier to see parameter changes
+                    if (_.get(params[seg], 'oriEst.tauAcc', -1) === 1)
+                        delete params[seg].oriEst.tauAcc
+                    if (_.get(params[seg], 'oriEst.zeta', -1) === 0)
+                        delete params[seg].oriEst.zeta
+                    if (_.get(params[seg], 'oriEst.accRating', -1) === 1)
+                        delete params[seg].oriEst.accRating
+                    if (_.get(params[seg], 'deltaCorrectionSettings.est_settings.tauBias', -1) === 5)
+                        delete params[seg].deltaCorrectionSettings.est_settings.tauBias
+                    if (_.get(params[seg], 'deltaCorrectionSettings.est_settings.tauDelta', -1) === 5)
+                        delete params[seg].deltaCorrectionSettings.est_settings.tauDelta
+                    if (_.get(params[seg], 'deltaCorrectionSettings.est_settings.windowTime', -1) === 8)
+                        delete params[seg].deltaCorrectionSettings.est_settings.windowTime
+                    if (_.get(params[seg], 'resetAlignmentSettings.exactAxis', 'x') === null)
+                        delete params[seg].resetAlignmentSettings.exactAxis
+                    if (vecNorm(_.get(params[seg], 'resetAlignmentSettings.x', [1, 1, 1])) < 1e-8) {
+                        delete params[seg].resetAlignmentSettings.x
+                        delete params[seg].resetAlignmentSettings.xCs
+                    }
+                    if (vecNorm(_.get(params[seg], 'resetAlignmentSettings.y', [1, 1, 1])) < 1e-8) {
+                        delete params[seg].resetAlignmentSettings.y
+                        delete params[seg].resetAlignmentSettings.yCs
+                    }
+                    if (vecNorm(_.get(params[seg], 'resetAlignmentSettings.z', [1, 1, 1])) < 1e-8) {
+                        delete params[seg].resetAlignmentSettings.z
+                        delete params[seg].resetAlignmentSettings.zCs
+                    }
+                    if (_.get(params[seg], 'resetHeadingSettings.deltaOffset', 1) === 0)
+                        delete params[seg].resetHeadingSettings.deltaOffset
+                }
+                this.backend.sendParams(params)
+            },
+        },
+        watch: {
+            selectedSegment() {
+                if (this.selectedSegment) {
+                    console.log('selectedSegment: ', this.selectedSegment)
+                    this.oriEst = _.get(this.params, [this.selectedSegment, 'oriEst'], {tauAcc: 1, zeta: 0, accRating: 1})
+                    this.resetAlignmentSettings = _.get(this.params, [this.selectedSegment, 'resetAlignmentSettings'])
+                    this.jointEstSettings = _.get(this.params, [this.selectedSegment, 'jointEstSettings'])
+                    this.resetHeadingSettings = _.get(this.params, [this.selectedSegment, 'resetHeadingSettings'])
+                    this.deltaCorrectionSettings = _.get(this.params, [this.selectedSegment, 'deltaCorrectionSettings'])
+                } else {
+                    console.log('unselectedSegment: ', this.selectedSegment)
+                }
+            },
+
+            config() {
+                this.updateDefault()
+            },
+
+            oriEst() {
+                if (this.selectedSegment) {
+                    _.set(this.params, [this.selectedSegment, this.signals.orientationEstimation], this.oriEst);
+                }
+            },
+            resetAlignmentSettings() {
+                if (this.selectedSegment) {
+                    _.set(this.params, [this.selectedSegment, this.signals.resetAlignmentSettings], this.resetAlignmentSettings);
+                }
+            },
+            jointEstSettings() {
+                if (this.selectedSegment) {
+                    _.set(this.params, [this.selectedSegment, this.signals.jointEstSettings], this.jointEstSettings);
+                }
+            },
+            resetHeadingSettings() {
+                if (this.selectedSegment) {
+                    _.set(this.params, [this.selectedSegment, this.signals.resetHeadingSettings], this.resetHeadingSettings);
+                }
+            },
+            deltaCorrectionSettings() {
+                if (this.selectedSegment) {
+                    _.set(this.params, [this.selectedSegment, this.signals.deltaCorrectionSettings], this.deltaCorrectionSettings);
+                }
+            },
+        },
+    })
+
+
+    const app = Vue.createApp({
+        template: `
+            <UiSplitter :sizes="debugMode ? [60, 40] : [100, 0]" :fixed="!debugMode" direction="horizontal" :scroll="[false, true]" >
+                <template #first>
+                    <UiSplitter :sizes="viewMode ? [60, 40] : [100, 0]" :fixed="!viewMode" direction="vertical" :scroll="[false, true]" >
+                        <template #first>
+                            <UiRenderCanvas ref="renderCanvas" style="width: 100%; height: 100%; overflow: hidden;" />
+                            <div id="playbackControls"><UiPlaybackControls :backend="backend" :markers="markers" /></div>
+                            <UiButton id="debugButton" variant="outline-primary" title="debug panel" @click="toggleDebug"><i class="bi-gear"></i></UiButton>
+                            <UiButton id="utilsButton" variant="outline-primary" title="heading correction plot" @click="toggleView"><i class="bi-graph-up"></i></UiButton>
+                        </template>
+                        <template #second>
+                            <div class="container mt-3">
+                                <UiHeadingCorrectionPlot v-if="config" :source="backend" :segment="selectedSegment"/>
+                            </div>
+                        </template>
+                    </UiSplitter>
+                </template>
+                <template #second>
+                    <div class="container mt-3">
+                        <UiFullBodySignalSelection v-if="config" :backend="backend" :scene="scene" :config="config" :chains="[scene.boxmodel, scene.refBoxmodel]"/>
+                        <UiPanel title="General Kinematic Chain Settings" collapsed>
+                            <UiKinematicChainDebugControls :scene="scene" />
+                        </UiPanel>
+                        <InteractiveTuning collapsed v-if="config" :scene="scene" :config="config" :backend="backend" />
+                        <UiFullBodyCameraTools collapsed v-if="scene&&backend" :scene="scene" :camera="scene.camera" :backend="backend" />
+                        <UiRecordButton v-if="scene && backend" :backend="backend" :scene="scene" :camera="scene.camera" class="w-100 mb-3" />
+                    </div>
+                </template>
+            </UiSplitter>
+        `,
+        components: {
+            InteractiveTuning,
+        },
+        data() {
+            return {
+                backend: Vue.shallowRef(new Backend()),
+                scene: Vue.shallowRef(null),
+                markers: [],
+                debugMode: true,
+                viewMode: false,
+                config: null,
+                selectedSegment: '',
+            }
+        },
+        mounted() {
+            this.scene = new MainScene(this.$refs.renderCanvas)
+            this.backend.on('sample', sample => this.scene.onSample(sample))
+            this.backend.on('config', config => {
+                if (config.markers !== undefined) {
+                    this.markers = config.markers
+                }
+                if (config.debugMode !== undefined) {
+                    this.debugMode = !!config.debugMode
+                }
+                this.scene.setConfig(config)
+                this.config = config
+            })
+            this.scene.on('pick', name => {
+                if (this.selectedSegment === name)
+                    this.selectedSegment = ''
+                else
+                    this.selectedSegment = name
+            })
+        },
+        methods: {
+            toggleDebug() {
+                this.debugMode = !this.debugMode
+            },
+            toggleView() {
+                this.viewMode = !this.viewMode
+            }
+        }
+    })
+
+    app.use(UiPlugin)
+    const vm = app.mount('#app')
+    window.app = app
+    window.vm = vm
+</script>
+
+</body>
+</html>

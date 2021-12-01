@@ -1,0 +1,17 @@
+{
+  "name": "ui-gallery",
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "serve": "vite preview"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "file:../../lib-qmt/node_modules/@vitejs/plugin-vue",
+    "@vue/compiler-sfc": "file:../../lib-qmt/node_modules/@vue/compiler-sfc",
+    "vite": "file:../../lib-qmt/node_modules/vite"
+  },
+  "dependencies": {
+    "lib-qmt": "file:../../lib-qmt"
+  }
+}

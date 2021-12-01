@@ -16,6 +16,17 @@ jobs:
       - uses: actions/setup-python@v2
         name: Install Python
 
+      - uses: actions/setup-node@v2
+        name: Install Node
+
+      - name: Run npm install
+        working-directory: qmt/webapps/lib-qmt
+        run: npm install
+
+      - name: Build webapp library
+        working-directory: qmt/webapps/lib-qmt
+        run: npm run build
+
       - name: Build sdist
         run: python setup.py sdist
 
@@ -37,16 +48,25 @@ jobs:
       - uses: actions/setup-python@v2
         name: Install Python
 
-      - name: Install cibuildwheel
-        run: python -m pip install cibuildwheel==2.1.2
+      - uses: actions/setup-node@v2
+        name: Install Node
 
-# TODO: python 3.10 (not released as of 2021-09-24) is skipped for now because the MacOS build fails with a
-# numpy error ("Polyfit sanity test emitted a warning, most likely due to using a buggy Accelerate backend.")
-# -> check again later
+      - name: Install cibuildwheel
+        run: python -m pip install cibuildwheel==2.2.2
+
+      - name: Run npm install
+        working-directory: qmt/webapps/lib-qmt
+        run: npm install
+
+      - name: Build webapp library
+        working-directory: qmt/webapps/lib-qmt
+        run: npm run build
+
       - name: Build wheels
         run: python -m cibuildwheel --output-dir wheelhouse
         env:
-          CIBW_SKIP: "pp* cp27-* cp35-* cp36-* cp310-*"
+          CIBW_SKIP: "pp* *-musllinux_* cp27-* cp35-* cp36-*"
+          CIBW_ARCHS_MACOS: "x86_64 universal2 arm64"
 
       - uses: actions/upload-artifact@v2
         with:

@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<!--
+SPDX-FileCopyrightText: 2021 Daniel Laidig <laidig@control.tu-berlin.de>
+
+SPDX-License-Identifier: MIT
+-->
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html" charset="utf-8"/>
+    <title>IMU Raw Data</title>
+    <link rel="stylesheet" href="/lib-qmt/style.css">
+    <style>
+        html, body, #app {
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+<div id="app"></div>
+<script type="module">
+    import { Vue, UiPlugin, Backend, BABYLON, Scene, IMUBox, Arrow, Quaternion, COLORS } from '/lib-qmt/lib-qmt.js'
+
+    const defaultConfig = {
+        'quat': 'quat1',
+        'gyr': 'gyr1',
+        'acc': 'acc1',
+        'mag': 'mag1',
+        'cs': 'RFU', // coordinate system
+        'letter': '1', // letter printed on the IMU
+        'axes': false, // enables axis arrows
+        'camera_rotation': 2, // 0 to 3, determines where north is in the display
+        'fixed': false, // if set to true, the IMU box does not move
+        'gyr_collapsed': true,
+        'acc_collapsed': true,
+        'mag_collapsed': true,
+        'webcam': false, // show webcam video below 3D scene
+    }
+
+    class MainScene extends Scene {
+        constructor(canvas, config) {
+            super(canvas)
+
+            this.config = config
+            this.fixed = config.fixed
+
+            this.cameraRotSteps = config.camera_rotation
+            this.deltaQuat = Quaternion.identity()
+            this.scale = 0.8
+
+            this.camera = new BABYLON.ArcRotateCamera('camera', -Math.PI/2, 1, 18, new BABYLON.Vector3(0, 0, 0), this.scene)
+            this.camera.parent = this.cameraTransform
+            this.camera.storeState()
+            this.camera.attachControl(true)
+            this.light = new BABYLON.HemisphericLight('light1', new BABYLON.Vector3(0, 1, 0), this.scene)
+            this.light2 = new BABYLON.DirectionalLight('light2', new BABYLON.Vector3(0.2, 0, -0.1), this.scene)
+
+            this.imu = new IMUBox(this.scene, {letter: config.letter, axes: config.axes, cs: config.cs})
+
+            const diameter = 0.15
+
+            this.gyrCyl = new Arrow(this.scene, {origin: [0, 0, 0],  diameter: diameter, scale: 0.8, color: COLORS.C3})
+            this.gyrCyl.setVector([0,0,0])
+            this.gyrCyl.visibility = false
+
+            this.accCyl = new Arrow(this.scene, {origin: [0, 0, 0],  diameter: diameter, scale: 0.8, color: COLORS.C9})
+            this.accCyl.setVector([0,0,0])
+            this.accCyl.visibility = false
+
+            this.magCyl = new Arrow(this.scene, {origin: [0, 0, 0],  diameter: diameter, scale: 7, color: COLORS.C2})
+            this.magCyl.setVector([0,0,0])
+            this.magCyl.visibility = false
+
+            this.floor = new FloorBox(this.scene)
+
+            this.rotate()
+        }
+
+        onSample(sample) {
+            const q = this.deltaQuat.multiply(this.fixed ? new Quaternion(1, 0, 0, 0) : new Quaternion(sample[this.config.quat] ?? [1, 0, 0, 0]))
+            const gyr = sample[this.config.gyr] ?? [0, 0, 0]
+            const acc = sample[this.config.acc] ?? [0, 0, 0]
+            const mag = sample[this.config.mag] ?? [0, 0, 0]
+
+            this.imu.quat = q
+            this.gyrCyl.setVector(q.rotate(gyr.map(x => x*8)))
+            this.accCyl.setVector(q.rotate(acc))
+            this.magCyl.setVector(q.rotate(mag.map(x => x/50)))
+        }
+
+        rotate() {
+            const alpha = this.camera.alpha
+            const beta = this.camera.beta
+            const radius = this.camera.radius
+            const target = this.camera.target
+            this.camera.restoreState()
+
+            const q = this.deltaQuat.conj().multiply(this.imu.quat)
+            if (this.camera.alpha === alpha && this.camera.beta === beta && this.camera.radius === radius && this.camera.target === target) {
+                this.cameraRotSteps = (this.cameraRotSteps + 1) % 4
+            }
+            this.deltaQuat = Quaternion.fromAngleAxis(this.cameraRotSteps*Math.PI/2, [0, 0, 1])
+            this.imu.quat = this.deltaQuat.multiply(q)
+            this.floor.deltaQuat = this.deltaQuat
+        }
+    }
+
+    class FloorBox {
+        constructor(scene) {
+            const options = {
+                width: 12,
+                height: 12,
+                depth: 0.01,
+            }
+            this.box = BABYLON.MeshBuilder.CreateBox('box', options, scene)
+
+            this.box.material = new BABYLON.StandardMaterial('mat', scene)
+            this.box.material.diffuseColor = COLORS.grey
+            this.box.material.alpha = 0.15
+
+
+            this.plane = BABYLON.MeshBuilder.CreatePlane('compassPlane', { size: 2, sideOrientation: BABYLON.Mesh.DOUBLESIDE })
+            this.plane.position.x = -4.8
+            this.plane.position.y = 4.8
+            this.plane.position.z = 0.1
+
+            this.mat = new BABYLON.StandardMaterial('compassMat')
+            this.mat.diffuseTexture = new BABYLON.Texture('/lib-qmt/assets/compass_rose_north.svg', scene)
+            this.mat.diffuseTexture.hasAlpha = true
+            this.mat.useAlphaFromDiffuseTexture = true
+            this.plane.material = this.mat
+        }
+
+        set deltaQuat(q) {
+            this.plane.rotationQuaternion = q.babylon()
+        }
+    }
+
+    const RawDataPlots = Vue.defineComponent({
+        template: `
+            <UiPanel title="Gyroscope [°/s]" v-model:collapsed="gyrCollapsed">
+                <template #header><i class="bi bi-circle-fill ms-2" :style="{color: COLORS.C3.toHexString()}"></i></template>
+                <template #default>
+                    <UiLinePlot
+                        :source="source" :signals="['zero', 'gyr1.0', 'gyr1.1', 'gyr1.2']"
+                        :style="plotStyle"
+                        :labels="[undefined, 'x', 'y', 'z']"
+                        :colors="['black', 'C3', 'C2', 'C0']"
+                        :ylim="[-360, 360]" :scaleFactor="180/Math.PI"
+                    />
+                    <div>rotation (change of orientation) + bias</div>
+                </template>
+            </UiPanel>
+            <UiPanel title="Accelerometer [m/s²]" v-model:collapsed="accCollapsed">
+                <template #header><i class="bi bi-circle-fill ms-2" :style="{color: COLORS.C9.toHexString()}"></i></template>
+                <template #default>
+                    <UiLinePlot
+                        :source="source" :signals="['zero', 'acc1.0', 'acc1.1', 'acc1.2']"
+                        :style="plotStyle"
+                        :labels="[undefined, 'x', 'y', 'z']"
+                        :colors="['black', 'C3', 'C2', 'C0']"
+                        :ylim="[-20, 20]"
+                    />
+                    <div>change of velocity + gravitational acceleration</div>
+                </template>
+            </UiPanel>
+            <UiPanel title="Magnetometer [µT]" v-model:collapsed="magCollapsed">
+                <template #header><i class="bi bi-circle-fill ms-2" :style="{color: COLORS.C2.toHexString()}"></i></template>
+                    <template #default>
+                    <UiLinePlot
+                        :source="source" :signals="['zero', 'mag1.0', 'mag1.1', 'mag1.2']"
+                        :style="plotStyle"
+                        :labels="['', 'x', 'y', 'z']"
+                        :colors="['black', 'C3', 'C2', 'C0']"
+                        :ylim="[-100, 100]"
+                    />
+                    <div>Earth\'s magnetic field + other magnetic fields</div>
+                </template>
+            </UiPanel>
+        `,
+        props: {
+            source: Object,
+            scene: Object,
+        },
+        data() {
+            return {
+                gyrCollapsed: true,
+                accCollapsed: true,
+                magCollapsed: true,
+                COLORS: COLORS,
+            }
+        },
+        mounted() {
+            this.source.on('sample', sample => {
+                this.text = JSON.stringify(sample, null, 2)
+            })
+        },
+        watch: {
+            scene() {
+                this.gyrCollapsed = this.source.config.gyr_collapsed
+                this.accCollapsed = this.source.config.acc_collapsed
+                this.magCollapsed = this.source.config.mag_collapsed
+            },
+            gyrCollapsed(collapsed) {
+                this.scene.gyrCyl.visibility = !collapsed
+            },
+            accCollapsed(collapsed) {
+                this.scene.accCyl.visibility = !collapsed
+            },
+            magCollapsed(collapsed) {
+                this.scene.magCyl.visibility = !collapsed
+            },
+        }
+    })
+
+    const app = Vue.createApp({
+        template: `
+            <UiSplitter :sizes="[50, 50]" direction="horizontal" :scroll="[false, true]" >
+                <template #first>
+                    <UiSplitter :sizes="webcam ? [50, 50] : [100, 0]" :fixed="!webcam" direction="vertical" :scroll="[false, false]">
+                        <template #first>
+                            <UiRenderCanvas ref="renderCanvas" style="width: 100%; height: 100%; overflow: hidden;" />
+                            <div  style="position: absolute; right: 1em; bottom: 1em;">
+                                <UiButton
+                                    variant="secondary" class="btn-sm"
+                                    @click="fixed = !fixed"
+                                    title="Keep IMU orientation fixed"
+                                >
+                                    <i class="bi" :class="fixed ? 'bi-unlock' : 'bi-lock'"></i>
+                                </UiButton>
+                                <UiButton
+                                    variant="secondary" class="btn-sm ms-3"
+                                    @click="this.scene.rotate()"
+                                    title="Reset camera and rotate north direction by 90°"
+                                >
+                                    <i class="bi bi-arrow-counterclockwise"></i>
+                                </UiButton>
+                            </div>
+                        </template>
+                        <template #second v-if="webcam">
+                            <UiWebcamVideo></UiWebcamVideo>
+                        </template>
+                    </UiSplitter>
+                </template>
+                <template #second>
+                    <div class="container mt-3">
+                        <RawDataPlots :source="backend" :scene="scene" />
+                    </div>
+                </template>
+            </UiSplitter>
+        `,
+        components: { RawDataPlots },
+        data() {
+            return {
+                backend: Vue.shallowRef(new Backend({defaultConfig, jsonDataSourceOptions: {loop: true}})),
+                scene: Vue.shallowRef(null),
+                fixed: false,
+                webcam: false,
+            }
+        },
+        mounted() {
+            this.backend.addProcessingHook(function(sample) {
+                sample.zero = 0.0
+                return sample
+            })
+            this.backend.on('config', config => {
+                this.scene = new MainScene(this.$refs.renderCanvas, config)
+                this.backend.on('sample', sample => this.scene.onSample(sample))
+                this.webcam = config.webcam
+            })
+        },
+        watch: {
+            fixed(fixed) {
+                this.scene.fixed = fixed
+            }
+        }
+    })
+    app.use(UiPlugin)
+    const vm = app.mount('#app')
+    window.app = app
+    window.vm = vm
+</script>
+
+</body>
+</html>

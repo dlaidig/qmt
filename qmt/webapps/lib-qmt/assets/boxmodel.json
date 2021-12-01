@@ -1,0 +1,196 @@
+{
+  "common": {
+    "defaults": {
+      "parent": null,
+
+      "signal": null,
+      "quat": [1, 1, 0, 0],
+      "relative": false,
+      "headingOffset": null,
+
+      "dimensions": [0, 0, 0],
+      "sphere": 3,
+      "origin_abs": [0, 0, 0],
+      "origin_rel": [0, 0, 0],
+      "position_abs": [0, 0, 0],
+      "position_rel": [0, 0, 0],
+      "scale": 1.0,
+
+      "color": "red",
+      "face": 4,
+      "edges": true,
+      "opacity": 1,
+
+      "q_segment2sensor": null,
+      "imubox_show": true,
+      "imubox_scale": 0.6,
+      "imubox_cs": "RFU",
+      "imubox_distance_rel": 1.05,
+      "imubox_distance_abs": 1
+    },
+    "segments": {}
+  },
+  "human": {
+    "base": "common",
+    "segments": {
+      "hip": {
+        "parent": "root",
+        "dimensions": [3, 6, 9],
+        "origin_rel": [0, 0, 0],
+        "origin_abs": [0, 0, 0],
+        "color": "blue",
+        "face": 2
+      },
+      "upper_leg_left": {
+        "parent": "hip",
+        "dimensions": [3, 12, 3],
+        "origin_rel": [0, 0.5, 0],
+        "origin_abs": [0, 1.5, 0],
+        "position_rel": [0, -0.5, -0.5],
+        "position_abs": [0, -1.5, 1.5],
+        "color": "red",
+        "face": 2
+      },
+      "lower_leg_left": {
+        "parent": "upper_leg_left",
+        "dimensions": [3, 12, 3],
+        "origin_rel": [0, 0.5, 0],
+        "origin_abs": [0, 1.5, 0],
+        "position_rel": [0, -1, 0],
+        "position_abs": [0, -3, 0],
+        "color": "red",
+        "face": 2
+      },
+      "foot_left": {
+        "parent": "lower_leg_left",
+        "dimensions": [6, 3, 3],
+        "origin_rel": [-0.5, 0.5, 0],
+        "origin_abs": [0, 1.5, 0],
+        "position_rel": [0, -1, 0],
+        "position_abs": [0, -3, 0],
+        "color": "red",
+        "face": 4
+      },
+      "upper_leg_right": {
+        "parent": "hip",
+        "dimensions": [3, 12, 3],
+        "origin_rel": [0, 0.5, 0],
+        "origin_abs": [0, 1.5, 0],
+        "position_rel": [0, -0.5, 0.5],
+        "position_abs": [0, -1.5, -0.5],
+        "color": "green",
+        "face": 2
+      },
+      "lower_leg_right": {
+        "parent": "upper_leg_right",
+        "dimensions": [3, 12, 3],
+        "origin_rel": [0, 0.5, 0],
+        "origin_abs": [0, 1.5, 0],
+        "position_rel": [0, -1, 0],
+        "position_abs": [0, -3, 0],
+        "color": "green",
+        "face": 2
+      },
+      "foot_right": {
+        "parent": "lower_leg_right",
+        "dimensions": [6, 3, 3],
+        "origin_rel": [-0.5, 0.5, 0],
+        "origin_abs": [0, 1.5, 0],
+        "position_rel": [0, -1, 0],
+        "position_abs": [0, -3, 0],
+        "color": "green",
+        "face": 4
+      },
+      "lower_back": {
+        "parent": "hip",
+        "dimensions": [3, 6, 6],
+        "origin_rel": [0, -0.5, 0],
+        "origin_abs": [0, -1.5, 0],
+        "position_rel": [0, 0.5, 0],
+        "position_abs": [0, 1.5, 0],
+        "color": "blue",
+        "face": 2
+      },
+      "upper_back": {
+        "parent": "lower_back",
+        "dimensions": [3, 9, 9],
+        "origin_rel": [0, -0.5, 0],
+        "origin_abs": [0, -1.5, 0],
+        "position_rel": [0, 1, 0],
+        "position_abs": [0, 3, 0],
+        "color": "blue",
+        "face": 2
+      },
+      "upper_arm_left": {
+        "parent": "upper_back",
+        "dimensions": [3, 9, 3],
+        "origin_rel": [0, 0.5, 0],
+        "origin_abs": [0, 1.5, 1.5],
+        "position_rel": [0, 1, -0.5],
+        "position_abs": [0, 0, -1.5],
+        "color": "red",
+        "face": 3
+      },
+      "forearm_left": {
+        "parent": "upper_arm_left",
+        "dimensions": [3, 7.5, 3],
+        "origin_rel": [0, 0.5, 0],
+        "origin_abs": [0, 1.5, 0],
+        "position_rel": [0, -1, -0.5],
+        "position_abs": [0, -3, 0],
+        "color": "red",
+        "face": 3
+      },
+      "hand_left": {
+        "parent": "forearm_left",
+        "dimensions": [3, 3, 3],
+        "origin_rel": [0, 0.5, 0],
+        "origin_abs": [0, 1.5, 0],
+        "position_rel": [0, -1, 0],
+        "position_abs": [0, -3, 0],
+        "color": "red",
+        "face": 3
+      },
+      "upper_arm_right": {
+        "parent": "upper_back",
+        "dimensions": [3, 9, 3],
+        "origin_rel": [0, 0.5, 0],
+        "origin_abs": [0, 1.5, -1.5],
+        "position_rel": [0, 1, 0.5],
+        "position_abs": [0, 0, 1.5],
+        "color": "green",
+        "face": 3
+      },
+      "forearm_right": {
+        "parent": "upper_arm_right",
+        "dimensions": [3, 7.5, 3],
+        "origin_rel": [0, 0.5, 0],
+        "origin_abs": [0, 1.5, 0],
+        "position_rel": [0, -1, 0.5],
+        "position_abs": [0, -3, 0],
+        "color": "green",
+        "face": 3
+      },
+      "hand_right": {
+        "parent": "forearm_right",
+        "dimensions": [3, 3, 3],
+        "origin_rel": [0, 0.5, 0],
+        "origin_abs": [0, 1.5, 0],
+        "position_rel": [0, -1, 0],
+        "position_abs": [0, -3, 0],
+        "color": "green",
+        "face": 3
+      },
+      "head": {
+        "parent": "upper_back",
+        "dimensions": [3, 7.5, 4.5],
+        "origin_rel": [0, -0.5, 0],
+        "origin_abs": [0, -1.5, 0],
+        "position_rel": [0, 1, 0],
+        "position_abs": [0, 3, 0],
+        "color": "blue",
+        "face": 2
+      }
+    }
+  }
+}

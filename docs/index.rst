@@ -2,25 +2,35 @@
 ..
 .. SPDX-License-Identifier: MIT
 
-Documentation
-=============
-
-This is a dummy repo for testing. Real code coming soon.
+Documentation of the qmt Toolbox
+================================
 
 .. toctree::
    :maxdepth: 2
    :caption: User's Guide:
 
-   test_page
-   
+   introduction
+   tutorial
+   application_examples
+   coordinate_systems
 
 .. toctree::
    :maxdepth: 2
    :caption: Reference:
 
    python_functions
+   python_blocks
+   python_utils
    matlab_functions
-   
+   webapps
+
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Developer Documentation:
+
+   dev_guidelines
+   dev_webapps
 
 Indices and tables
 ------------------

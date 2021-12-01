@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<!--
+SPDX-FileCopyrightText: 2021 Daniel Laidig <laidig@control.tu-berlin.de>
+
+SPDX-License-Identifier: MIT
+-->
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html" charset="utf-8"/>
+    <title>Box Model</title>
+    <link rel="stylesheet" href="/lib-qmt/style.css">
+    <style>
+        html, body, #app {
+            height: 100%;
+        }
+
+        #playbackControls {
+            position: absolute;
+            bottom: 1em;
+            left: 1em;
+            width: calc(100% - 2em);
+        }
+
+        #debugButton {
+            position: absolute;
+            top: 1em;
+            right: 1em;
+        }
+    </style>
+</head>
+<body>
+<div id="app"></div>
+<script type="module">
+    import { _, Vue, UiPlugin, Backend, BABYLON, Scene, BoxModel, deg2rad } from '/lib-qmt/lib-qmt.js'
+
+    const defaultConfig = {
+        base: 'common',
+        segments: {},
+        debug_mode: false,
+        markers: [],
+    }
+
+    class MainScene extends Scene {
+        constructor(canvas) {
+            super(canvas)
+            this.createScene()
+        }
+
+        createScene() {
+            this.camera = new BABYLON.ArcRotateCamera('camera', deg2rad(20), deg2rad(70), 100, new BABYLON.Vector3(0, 12, 0), this.scene)
+
+            // this.camera = new BABYLON.UniversalCamera('camera', new BABYLON.Vector3(100, 30, 0), this.scene)
+            // this.camera.setTarget(new BABYLON.Vector3(0, 12, 0))
+
+            // this.camera.position = new BABYLON.Vector3(100, 30, 0)
+
+            this.camera.attachControl(true)
+            this.camera.parent = this.cameraTransform
+
+            this.light1 = new BABYLON.HemisphericLight('light1', new BABYLON.Vector3(1, 1, 2), this.scene)
+            this.light2 = new BABYLON.HemisphericLight('light2', new BABYLON.Vector3(-1, -1, -2), this.scene)
+            this.scene.clearColor = new BABYLON.Color4(0.9, 0.9, 0.9)
+
+            // const diameter = 1
+            // this.x_axis = new Arrow(this.scene, {color: COLORS.C3, vector: [30, 0, 0], origin: [0, 0, 0], diameter: diameter})
+            // this.y_axis = new Arrow(this.scene, {color: COLORS.C2, vector: [0, 30, 0], origin: [0, 0, 0], diameter: diameter})
+            // this.z_axis = new Arrow(this.scene, {color: COLORS.C0, vector: [0, 0, 30], origin: [0, 0, 0], diameter: diameter})
+
+            this.boxmodel = null
+        }
+
+        setConfig(config) {
+            if (this.boxmodel !== null) {
+                this.boxmodel.dispose()
+            }
+            this.boxmodel = new BoxModel(this.scene, config)
+            this.boxmodel.position = this.boxmodel.config.position ?? [-8, 0, 15]
+            this.emit('config', this.boxmodel.config.segments)
+
+            this.boxmodel.pickable = true
+            this.boxmodel.on('pick', name => this.emit('pick', name))
+            this.boxmodel.on('sample', sample => this.emit('sample', sample))
+        }
+
+        onSample(sample) {
+            if (this.boxmodel === null)
+                return
+            this.boxmodel.onSample(sample)
+        }
+    }
+
+    const app = Vue.createApp({
+        template: `
+            <UiSplitter :sizes="debugMode ? [60, 40] : [100, 0]" :fixed="!debugMode" direction="horizontal" :scroll="[false, true]" >
+                <template #first>
+                    <UiRenderCanvas ref="renderCanvas" style="width: 100%; height: 100%; overflow: hidden;" />
+                    <div id="playbackControls"><UiPlaybackControls :backend="backend" :markers="markers" /></div>
+                    <UiButton id="debugButton" variant="outline-primary" title="debug panel" @click="toggleDebug"><i class="bi-gear"></i></UiButton>
+                </template>
+                <template #second>
+                    <div class="container mt-3">
+                        <UiKinematicChainDebugControls :scene="scene" />
+                    </div>
+                </template>
+            </UiSplitter>
+        `,
+        data() {
+            return {
+                backend: Vue.shallowRef(new Backend({defaultConfig})),
+                scene: Vue.shallowRef(null),
+                markers: [],
+                debugMode: false,
+            }
+        },
+        mounted() {
+            this.scene = new MainScene(this.$refs.renderCanvas)
+            this.backend.on('sample', sample => this.scene.onSample(sample))
+            this.backend.on('config', config => {
+                this.markers = config.markers
+                this.debugMode = !!config.debug_mode
+                console.log('config', config)
+                this.scene.setConfig(config)
+            })
+        },
+        methods: {
+            toggleDebug() {
+                this.debugMode = !this.debugMode
+            }
+        }
+    })
+    app.use(UiPlugin)
+    const vm = app.mount('#app')
+    window.app = app
+    window.vm = vm
+</script>
+
+</body>
+</html>

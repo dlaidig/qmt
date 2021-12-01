@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<!--
+SPDX-FileCopyrightText: 2021 Daniel Laidig <laidig@control.tu-berlin.de>
+
+SPDX-License-Identifier: MIT
+-->
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html" charset="utf-8"/>
+    <title>IMU Boxes</title>
+    <link rel="stylesheet" href="/lib-qmt/style.css">
+</head>
+<body>
+<div id="app"></div>
+<script type="module">
+    import { Vue, UiPlugin, Backend } from '/lib-qmt/lib-qmt.js'
+
+    const defaultConfig = {
+        // imus: [
+        //     {'signal': 'quat1', 'letter': '1'},
+        // ],
+        imus: [],  // automatically find signals named 'quat' or 'quat?' in the first sample
+        cs: 'RFU', // coordinate system, can also specifified for every IMU individually
+        axes: false, // enables axis arrows, can also be specified for every IMU individually
+        markers: [], // [1, {pos: 2, col: 'C1'}, {pos: 5, end: 8, name: 'example for a range marker'}]
+        show_speed_slider: false,
+    }
+
+    const app = Vue.createApp({
+        template: `
+            <div class="container mt-3">
+                <UiIMUScene
+                    v-for="imu in imus" :key="imu"
+                    style="width: 190px; height: 140px"
+                    :options="imu" :source="backend"
+                />
+                <div>
+                    <UiPlaybackControls :backend="backend" :autoHide="true" class="mt-3" :markers="markers" />
+                </div>
+                <div v-if="showSpeedSlider" class="mt-3">
+                    <UiSlider
+                        label="Speed:" labelWidth="5em" v-model="speed"
+                        :options="{min: 0.1, max: 10, step: 0.1}" :valueLabel="true"
+                     />
+                </div>
+            </div>
+        `,
+        data() {
+            return {
+                backend: Vue.shallowRef(new Backend({defaultConfig})),
+                sample: {},
+                imus: [],
+                markers: [],
+                showSpeedSlider: false,
+                speed: 1.0,
+            }
+        },
+        mounted() {
+            this.backend.on('config', config => {
+                this.imus = config.imus
+                this.markers = config.markers
+                this.showSpeedSlider = config.show_speed_slider
+                if (this.showSpeedSlider) {
+                    this.backend.addParam(this, 'speed')
+                }
+            })
+            this.backend.on('sample', sample => {
+                if (this.imus.length === 0) {
+                    // find signals
+                    const imus = []
+                    for (const key of Object.keys(sample)) {
+                        if (key === 'quat') {
+                            imus.push({signal: 'quat'})
+                        } else if (key.length === 5 && key.startsWith('quat')) {
+                            imus.push({signal: key, letter: key.slice(-1)})
+                        }
+                    }
+                    this.addDefaultImuProps(imus)
+                    this.imus = imus
+                }
+                this.sample = sample
+            })
+        },
+        // updated() { console.log('updated App') },
+        methods: {
+            addDefaultImuProps(imus) {
+                for (const imu of imus) {
+                    if (!('cs' in imu)) {
+                        imu.cs = this.backend.config.cs
+                    }
+                    if (!('axes' in imu)) {
+                        imu.axes = this.backend.config.axes
+                    }
+                }
+            }
+        }
+    })
+    app.use(UiPlugin)
+    const vm = app.mount('#app')
+    window.app = app
+    window.vm = vm
+</script>
+
+</body>
+</html>

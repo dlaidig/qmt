@@ -2,12 +2,18 @@
 #
 # SPDX-License-Identifier: MIT
 
+recursive-include qmt/cpp *.pyx *.hpp *.h
+
 # webapps
-include qmt/webapps/lib-qmt/index.html
 include qmt/webapps/lib-qmt/lib-qmt.js
 include qmt/webapps/lib-qmt/style.css
+include qmt/webapps/lib-qmt/favicon.ico
+include qmt/webapps/lib-qmt/favicon.png
+recursive-include qmt/webapps/lib-qmt/assets *.svg *.json
+recursive-include qmt/webapps/demo *.html *.js package.json
+recursive-include qmt/webapps/view *.html *.js package.json
 prune qmt/webapps/**/node_modules
 prune qmt/webapps/**/dist
 
 # matlab code
-recursive-include qmt/matlab/ *.m
+recursive-include qmt/matlab *.m

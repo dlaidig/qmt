@@ -1,0 +1,7 @@
+# SPDX-FileCopyrightText: 2021 Daniel Laidig <laidig@control.tu-berlin.de>
+#
+# SPDX-License-Identifier: MIT
+
+Note: The files in this directory were downloaded from https://x-io.co.uk/open-source-imu-and-ahrs-algorithms/
+on 2020-07-09. The content of the files internal_report_appendix_A_IMU_filter.c and
+internal_report_appendix_B_MARG_filter.c was extracted from madgwick_internal_report.pdf, available on this website.

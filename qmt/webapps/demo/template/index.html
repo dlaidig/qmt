@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<!--
+SPDX-FileCopyrightText: 2021 Daniel Laidig <laidig@control.tu-berlin.de>
+
+SPDX-License-Identifier: MIT
+-->
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html" charset="utf-8"/>
+    <title>Template</title>
+    <link rel="stylesheet" href="/lib-qmt/style.css">
+    <style>
+        html, body, #app {
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+<div id="app"></div>
+<script type="module">
+    import { Vue, UiPlugin, Backend, BABYLON, Scene, IMUBox, Quaternion } from '/lib-qmt/lib-qmt.js'
+
+    class MainScene extends Scene {
+        constructor(canvas) {
+            super(canvas)
+
+            this.camera = new BABYLON.ArcRotateCamera('camera', 0, 1, 16, new BABYLON.Vector3(0, 0, 0), this.scene)
+            this.camera.parent = this.cameraTransform
+            this.camera.attachControl(true)
+            this.light = new BABYLON.HemisphericLight('light1', new BABYLON.Vector3(1, 0, 0), this.scene)
+            this.light2 = new BABYLON.DirectionalLight('light2', new BABYLON.Vector3(0, 0.2, -0.1), this.scene)
+
+            this.imu = new IMUBox(this.scene, {letter: '1', axes: true})
+        }
+
+        onSample(sample) {
+            this.imu.quat = sample.quat1 ?? Quaternion.identity()
+        }
+    }
+
+    const JsonSampleComponent = Vue.defineComponent({
+        template: `<UiPanel title="Current sample"><pre>{{ text }}</pre></UiPanel>`,
+        props: {
+            source: Object,
+        },
+        data() {
+            return {
+                text: '',
+            }
+        },
+        mounted() {
+            this.source.on('sample', sample => {
+                this.text = JSON.stringify(sample, null, 2)
+            })
+        },
+    })
+
+    const app = Vue.createApp({
+        template: `
+            <UiSplitter :sizes="[50, 50]" direction="horizontal" :scroll="[false, true]" >
+                <template #first>
+                    <UiRenderCanvas ref="renderCanvas" style="width: 100%; height: 100%; overflow: hidden;" />
+                </template>
+                <template #second>
+                    <div class="container mt-3">
+                        <h1>Webapp Template</h1>
+                        <JsonSampleComponent :source="backend" />
+                        <UiPlaybackControls :backend="backend" />
+                    </div>
+                </template>
+            </UiSplitter>
+        `,
+        components: { JsonSampleComponent },
+        data() {
+            return {
+                backend: Vue.shallowRef(new Backend()),
+                scene: null,
+            }
+        },
+        mounted() {
+            this.scene = new MainScene(this.$refs.renderCanvas)
+            this.backend.on('sample', sample => this.scene.onSample(sample))
+        },
+    })
+    app.use(UiPlugin)
+    const vm = app.mount('#app')
+    window.app = app
+    window.vm = vm
+</script>
+
+</body>
+</html>
