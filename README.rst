@@ -8,7 +8,8 @@ qmt -- IMU motion tracking toolbox
 |tests| |build| |docs| |version| |python| |format| |license| |downloads|
 
 The `qmt` toolbox (Quaternion-based Inertial Motion Tracking Toolbox) is a collection of functions, algorithms,
-visualization tools, and other utilities with a focus on IMU-based motion tracking.
+visualization tools, and other utilities with a focus on IMU-based motion tracking. The `source code
+<https://github.com/dlaidig/qmt>`_ is hosted on GitHub.
 
 Documentation
 -------------
@@ -18,7 +19,7 @@ Detailed documentation can be found online at https://qmt.readthedocs.io/.
 Installation
 ------------
 
-The qmt Python package can easily be installed from PyPI via pip, e.g.:
+The qmt Python package can easily be installed from `PyPI <https://pypi.org/project/qmt/>`_ via pip, e.g.:
 
 .. code-block:: sh
 

@@ -14,7 +14,7 @@ analyze new experimental data with just a few lines of code.
 Installation
 ------------
 
-The qmt Python package can easily be installed from PyPI via pip, e.g.:
+The qmt Python package can easily be installed from `PyPI <https://pypi.org/project/qmt/>`_ via pip, e.g.:
 
 .. code-block:: sh
 
@@ -27,9 +27,9 @@ window, use the extra ``gui`` specifier: ``pip install "qmt[gui]"``. If installi
 your architecture, you can either find other ways to install it (e.g.,
 `brew <https://formulae.brew.sh/formula/pyside@2>`_) or use the Chromium browser window fallback.
 
-To install the toolbox from source, the JavaScript library for the webapps needs to be built first. It is also
-recommended to install the optional ``dev`` dependencies. In the directory of the git repository, run the following
-commands:
+To install the toolbox from `the source code hosted on GitHub <https://github.com/dlaidig/qmt>`_, the JavaScript library
+for the webapps needs to be built first. It is also recommended to install the optional ``dev`` dependencies. In the
+directory of the git repository, run the following commands:
 
 .. code-block:: sh
 

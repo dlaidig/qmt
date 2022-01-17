@@ -5,6 +5,12 @@
 Documentation of the qmt Toolbox
 ================================
 
+Links:
+------
+
+- Source code on GitHub: https://github.com/dlaidig/qmt
+- Python package on PyPI: https://pypi.org/project/qmt/
+
 .. toctree::
    :maxdepth: 2
    :caption: User's Guide:
