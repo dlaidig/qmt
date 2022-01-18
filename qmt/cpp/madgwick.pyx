@@ -148,8 +148,6 @@ cdef class MadgwickB:
 
     def setState(self, np.ndarray[np.double_t, ndim=1, mode='c'] quat,
                  np.ndarray[np.double_t, ndim=1, mode='c'] bias=None):
-        cdef double scale
-
         if quat is not None:
             assert quat.shape[0] == 4
             self.c_obj.SEq_1 = quat[0]
@@ -263,17 +261,11 @@ cdef class MahonyAHRS:
         del self.c_obj
 
     def setParams(self, Kp, Ki):
-        if self.c_obj.twoKi != 0.0:
-            self.c_obj.integralFBx = self.c_obj.integralFBx * 2 * Ki / self.c_obj.twoKi
-            self.c_obj.integralFBy = self.c_obj.integralFBy * 2 * Ki / self.c_obj.twoKi
-            self.c_obj.integralFBz = self.c_obj.integralFBz * 2 * Ki / self.c_obj.twoKi
-
         self.c_obj.twoKp = 2*Kp
         self.c_obj.twoKi = 2*Ki
 
     def setState(self, np.ndarray[np.double_t, ndim=1, mode='c'] quat,
                  np.ndarray[np.double_t, ndim=1, mode='c'] bias=None):
-        cdef double scale
 
         if quat is not None:
             assert quat.shape[0] == 4
@@ -284,10 +276,9 @@ cdef class MahonyAHRS:
 
         if bias is not None:
             assert bias.shape[0] == 3
-            scale = self.c_obj.twoKi / 2.0 if self.c_obj.twoKi != 0.0 else 0.0
-            self.c_obj.integralFBx = bias[0] * scale
-            self.c_obj.integralFBy = bias[1] * scale
-            self.c_obj.integralFBz = bias[2] * scale
+            self.c_obj.integralFBx = bias[0]
+            self.c_obj.integralFBy = bias[1]
+            self.c_obj.integralFBz = bias[2]
 
     @cython.boundscheck(False)  # turn off bounds-checking for entire function
     @cython.wraparound(False)  # turn off negative index wrapping for entire function
@@ -307,10 +298,9 @@ cdef class MahonyAHRS:
         quat[2] = self.c_obj.q2
         quat[3] = self.c_obj.q3
         cdef np.ndarray[double, ndim=1, mode='c'] bias = np.zeros(shape=(3,))
-        cdef double scale = 2.0 / self.c_obj.twoKi if self.c_obj.twoKi != 0.0 else 0.0
-        bias[0] = self.c_obj.integralFBx * scale
-        bias[1] = self.c_obj.integralFBy * scale
-        bias[2] = self.c_obj.integralFBz * scale
+        bias[0] = self.c_obj.integralFBx
+        bias[1] = self.c_obj.integralFBy
+        bias[2] = self.c_obj.integralFBz
         return quat, bias
 
     @cython.boundscheck(False)  # turn off bounds-checking for entire function
@@ -328,10 +318,9 @@ cdef class MahonyAHRS:
         quat[2] = self.c_obj.q2
         quat[3] = self.c_obj.q3
         cdef np.ndarray[double, ndim=1, mode='c'] bias = np.zeros(shape=(3,))
-        cdef double scale = 2.0 / self.c_obj.twoKi if self.c_obj.twoKi != 0.0 else 0.0
-        bias[0] = self.c_obj.integralFBx * scale
-        bias[1] = self.c_obj.integralFBy * scale
-        bias[2] = self.c_obj.integralFBz * scale
+        bias[0] = self.c_obj.integralFBx
+        bias[1] = self.c_obj.integralFBy
+        bias[2] = self.c_obj.integralFBz
         return quat, bias
 
     @cython.boundscheck(False)  # turn off bounds-checking for entire function
@@ -348,8 +337,6 @@ cdef class MahonyAHRS:
         cdef np.ndarray[double, ndim=2, mode='c'] quat = np.zeros(shape=(N, 4))
         cdef np.ndarray[double, ndim=2, mode='c'] bias = np.zeros(shape=(N, 3))
 
-        cdef double scale = 2.0 / self.c_obj.twoKi if self.c_obj.twoKi != 0.0 else 0.0
-
         if mag is None:
             for i in range(N):
                 self.c_obj.updateIMU(<float> gyr[i, 0], <float> gyr[i, 1], <float> gyr[i, 2],
@@ -358,9 +345,9 @@ cdef class MahonyAHRS:
                 quat[i, 1] = self.c_obj.q1
                 quat[i, 2] = self.c_obj.q2
                 quat[i, 3] = self.c_obj.q3
-                bias[i, 0] = self.c_obj.integralFBx * scale
-                bias[i, 1] = self.c_obj.integralFBy * scale
-                bias[i, 2] = self.c_obj.integralFBz * scale
+                bias[i, 0] = self.c_obj.integralFBx
+                bias[i, 1] = self.c_obj.integralFBy
+                bias[i, 2] = self.c_obj.integralFBz
         else:
             assert mag.shape[0] == N
             assert mag.shape[1] == 3
@@ -372,7 +359,7 @@ cdef class MahonyAHRS:
                 quat[i, 1] = self.c_obj.q1
                 quat[i, 2] = self.c_obj.q2
                 quat[i, 3] = self.c_obj.q3
-                bias[i, 0] = self.c_obj.integralFBx * scale
-                bias[i, 1] = self.c_obj.integralFBy * scale
-                bias[i, 2] = self.c_obj.integralFBz * scale
+                bias[i, 0] = self.c_obj.integralFBx
+                bias[i, 1] = self.c_obj.integralFBy
+                bias[i, 2] = self.c_obj.integralFBz
         return quat, bias

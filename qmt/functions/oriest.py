@@ -23,7 +23,7 @@ def _calcAccMagDisAngle(quat, acc, mag):
 
 def madgwickAHRS(gyr, acc, mag=None, params=None, debug=False, plot=False):
     """
-    Mahony's orientation estimation algorithm.
+    Madgwick's orientation estimation algorithm.
 
     See https://doi.org/10.1109/ICORR.2011.5975346 for more information about this algorithm. Based on the C++
     implementation by Sebastian Madgwick, available at https://x-io.co.uk/open-source-imu-and-ahrs-algorithms/.
