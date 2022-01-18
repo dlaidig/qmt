@@ -21,14 +21,14 @@ def _calcAccMagDisAngle(quat, acc, mag):
     return np.column_stack([accDis, magDis])
 
 
-def madgwickAHRS(gyr, acc, mag=None, params=None, debug=False, plot=False):
+def oriEstMadgwick(gyr, acc, mag=None, params=None, debug=False, plot=False):
     """
     Madgwick's orientation estimation algorithm.
 
     See https://doi.org/10.1109/ICORR.2011.5975346 for more information about this algorithm. Based on the C++
     implementation by Sebastian Madgwick, available at https://x-io.co.uk/open-source-imu-and-ahrs-algorithms/.
 
-    This algorithm is also available as an online data processing block: :class:`qmt.MadgwickAHRS`.
+    This algorithm is also available as an online data processing block: :class:`qmt.OriEstMadgwickBlock`.
 
     :param gyr: Nx3 array with gyroscope measurements [rad/s]
     :param acc: Nx3 array with accelerometer measurements [m/s^2]
@@ -79,22 +79,22 @@ def madgwickAHRS(gyr, acc, mag=None, params=None, debug=False, plot=False):
             diagreement=disagreement
         )
         if plot:
-            madgwickAHRS_debugPlot(debugData, plot)
+            oriEstMadgwick_debugPlot(debugData, plot)
         if debug:
             return quat, debugData
 
     return quat
 
 
-def madgwickAHRS_debugPlot(debug, fig=None):
+def oriEstMadgwick_debugPlot(debug, fig=None):
     with AutoFigure(fig) as fig:
-        fig.suptitle(AutoFigure.title('madgwickAHRS'))
+        fig.suptitle(AutoFigure.title('oriEstMadgwick'))
         (ax1, ax2), (ax3, ax4) = fig.subplots(2, 2, sharex=True)
 
         style = _plotQuatEuler(ax1, ax2, debug, 'quat', 'output')
 
         ax3.axis('off')
-        ax3.text(0.5, 0.5, 'madgwickAHRS does not estimate gyroscope bias', ha='center', transform=ax3.transAxes)
+        ax3.text(0.5, 0.5, 'oriEstMadgwick does not estimate gyroscope bias', ha='center', transform=ax3.transAxes)
 
         ax4.plot(np.rad2deg(debug['diagreement']), style)
         ax4.set_title(f'diagreement in °, {debug["diagreement"].shape} ')
@@ -103,14 +103,14 @@ def madgwickAHRS_debugPlot(debug, fig=None):
         fig.tight_layout()
 
 
-def mahonyAHRS(gyr, acc, mag=None, params=None, debug=False, plot=False):
+def oriEstMahony(gyr, acc, mag=None, params=None, debug=False, plot=False):
     """
     Mahony's orientation estimation algorithm.
 
     See https://dx.doi.org/10.1109/TAC.2008.923738 for more information about this algorithm. Based on the C++
     implementation by Sebastian Madgwick, available at https://x-io.co.uk/open-source-imu-and-ahrs-algorithms/.
 
-    This algorithm is also available as an online data processing block: :class:`qmt.MahonyAHRS`.
+    This algorithm is also available as an online data processing block: :class:`qmt.OriEstMahonyBlock`.
 
     :param gyr: Nx3 array with gyroscope measurements [rad/s]
     :param acc: Nx3 array with accelerometer measurements [m/s^2]
@@ -174,16 +174,16 @@ def mahonyAHRS(gyr, acc, mag=None, params=None, debug=False, plot=False):
             bias=bias,
         )
         if plot:
-            mahonyAHRS_debugPlot(debugData, plot)
+            oriEstMahony_debugPlot(debugData, plot)
         if debug:
             return quat, debugData
 
     return quat
 
 
-def mahonyAHRS_debugPlot(debug, fig=None):
+def oriEstMahony_debugPlot(debug, fig=None):
     with AutoFigure(fig) as fig:
-        fig.suptitle(AutoFigure.title('mahonyAHRS'))
+        fig.suptitle(AutoFigure.title('oriEstMahony'))
         (ax1, ax2), (ax3, ax4) = fig.subplots(2, 2, sharex=True)
 
         style = _plotQuatEuler(ax1, ax2, debug, 'quat', 'output')

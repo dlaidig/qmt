@@ -57,8 +57,8 @@ Python data processing functions
 **Orientation estimation functions**
 
 .. autosummary::
-    qmt.madgwickAHRS
-    qmt.mahonyAHRS
+    qmt.oriEstMadgwick
+    qmt.oriEstMahony
     qmt.oriEstIMU
 
 
@@ -188,9 +188,9 @@ Utilities
 Orientation estimation functions
 ================================
 
-.. autofunction:: qmt.madgwickAHRS
+.. autofunction:: qmt.oriEstMadgwick
 
-.. autofunction:: qmt.mahonyAHRS
+.. autofunction:: qmt.oriEstMahony
 
 .. autofunction:: qmt.oriEstIMU
 

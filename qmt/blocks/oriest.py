@@ -12,14 +12,14 @@ def _calcAccMagDisAngle(quat, acc, mag):
     return np.array([np.arccos(np.clip(accE[2], -1, 1)), np.abs(np.arctan2(magE[0], magE[1]))], float)
 
 
-class MadgwickAHRSBlock(qmt.Block):
+class OriEstMadgwickBlock(qmt.Block):
     """
     Madgwicks's orientation estimation algorithm.
 
     See https://doi.org/10.1109/ICORR.2011.5975346 for more information about this algorithm. Based on the C++
     implementation by Sebastian Madgwick, available at https://x-io.co.uk/open-source-imu-and-ahrs-algorithms/.
 
-    This algorithm is also available as a function: :meth:`qmt.madgwickAHRS`.
+    This algorithm is also available as a function: :meth:`qmt.oriEstMadgwick`.
     """
     def __init__(self, Ts):
         """
@@ -68,14 +68,14 @@ class MadgwickAHRSBlock(qmt.Block):
         return quat, debug
 
 
-class MahonyAHRSBlock(qmt.Block):
+class OriEstMahonyBlock(qmt.Block):
     """
     Mahony's orientation estimation algorithm.
 
     See https://dx.doi.org/10.1109/TAC.2008.923738 for more information about this algorithm. Based on the C++
     implementation by Sebastian Madgwick, available at https://x-io.co.uk/open-source-imu-and-ahrs-algorithms/.
 
-    This algorithm is also available as a function: :meth:`qmt.mahonyAHRS`.
+    This algorithm is also available as a function: :meth:`qmt.oriEstMahony`.
     """
     def __init__(self, Ts):
         """

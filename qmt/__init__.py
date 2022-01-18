@@ -40,8 +40,8 @@ from .functions.quaternion import posScalar, posScalar_debugPlot
 from .functions.quaternion import deltaQuat, deltaQuat_debugPlot
 from .functions.quaternion import addHeading, addHeading_debugPlot
 
-from .functions.oriest import madgwickAHRS, madgwickAHRS_debugPlot
-from .functions.oriest import mahonyAHRS, mahonyAHRS_debugPlot
+from .functions.oriest import oriEstMadgwick, oriEstMadgwick_debugPlot
+from .functions.oriest import oriEstMahony, oriEstMahony_debugPlot
 from .functions.oriest import oriEstIMU, oriEstIMU_debugPlot
 
 from qmt.functions.reset import resetAlignment, resetAlignment_debugPlot
@@ -71,4 +71,4 @@ from .functions.heading_correction import removeHeadingDriftForStraightWalk_debu
 from .functions.joint_axis_est_hinge_olsson import jointAxisEstHingeOlsson, jointAxisEstHingeOlsson_debugPlot
 
 from .blocks.core import Block
-from .blocks.oriest import MadgwickAHRSBlock, MahonyAHRSBlock, OriEstIMUBlock
+from .blocks.oriest import OriEstMadgwickBlock, OriEstMahonyBlock, OriEstIMUBlock
