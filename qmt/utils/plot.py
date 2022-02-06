@@ -4,6 +4,7 @@
 
 import atexit
 import os
+from pathlib import Path
 
 _config = {
     'mode': 'show',
@@ -48,8 +49,8 @@ def setupDebugPlots(mode=NO_VALUE, filename=NO_VALUE, autoclose=NO_VALUE, figsiz
         outputChanged = True
 
     if filename is not NO_VALUE:
-        assert filename is None or isinstance(filename, str)
-        _config['filename'] = filename
+        assert filename is None or isinstance(filename, (str, Path))
+        _config['filename'] = str(filename) if isinstance(filename, Path) else filename
         outputChanged = True
 
     if autoclose is not NO_VALUE:
