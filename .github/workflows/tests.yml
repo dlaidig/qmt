@@ -27,12 +27,5 @@ jobs:
       - name: Run reuse lint
         run: reuse lint
 
-      # Unhandled SyntaxError in flake8 when parsing Cython code with Python 3.10. For now, this hack disables running
-      # flake8 when the Python version is 3.10. (In any case, there is not much benefit in running flake8 checking on
-      # multiple Python versions.)
-      - name: Disable flake8 on Python 3.10
-        run: sed -i "s/--flake8//" setup.cfg
-        if:  matrix.python-version == '3.10'
-
       - name: Run pytest
         run: pytest --nomatlab
