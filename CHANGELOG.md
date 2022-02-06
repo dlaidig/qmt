@@ -19,10 +19,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Changed
-- Prefix all orientation estimation functions/blocks with `oriEst`/`OriEst` (`qmt.oriEstMadgwick`, `qmt.oriEstMadgwick`,
+- Prefix all orientation estimation functions/blocks with `oriEst`/`OriEst` (`qmt.oriEstMadgwick`, `qmt.oriEstMahony`,
  `qmt.OriEstMadgwickBlock`, `qmt.OriEstMahonyBlock`).
 ### Fixed
-- Output correct gyroscope bias estimate in `qmt.oriEstMahony` (the previous estimate was wrongly scaled by Ki).
+- Output correct gyroscope bias estimate in `qmt.oriEstMahony` (the previous estimate was wrongly scaled by Ki and
+  the sign was wrong) and in `qmt.oriEstIMU` (the sign was wrong).
 - The `filename` parameter of `qmt.setupDebugPlots` now accepts `pathlib.Path` objects in addition to strings.
 
 ## [0.1.0] - 2021-12-01

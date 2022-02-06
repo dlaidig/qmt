@@ -276,9 +276,9 @@ cdef class MahonyAHRS:
 
         if bias is not None:
             assert bias.shape[0] == 3
-            self.c_obj.integralFBx = bias[0]
-            self.c_obj.integralFBy = bias[1]
-            self.c_obj.integralFBz = bias[2]
+            self.c_obj.integralFBx = -bias[0]
+            self.c_obj.integralFBy = -bias[1]
+            self.c_obj.integralFBz = -bias[2]
 
     @cython.boundscheck(False)  # turn off bounds-checking for entire function
     @cython.wraparound(False)  # turn off negative index wrapping for entire function
@@ -298,9 +298,9 @@ cdef class MahonyAHRS:
         quat[2] = self.c_obj.q2
         quat[3] = self.c_obj.q3
         cdef np.ndarray[double, ndim=1, mode='c'] bias = np.zeros(shape=(3,))
-        bias[0] = self.c_obj.integralFBx
-        bias[1] = self.c_obj.integralFBy
-        bias[2] = self.c_obj.integralFBz
+        bias[0] = -self.c_obj.integralFBx
+        bias[1] = -self.c_obj.integralFBy
+        bias[2] = -self.c_obj.integralFBz
         return quat, bias
 
     @cython.boundscheck(False)  # turn off bounds-checking for entire function
@@ -318,9 +318,9 @@ cdef class MahonyAHRS:
         quat[2] = self.c_obj.q2
         quat[3] = self.c_obj.q3
         cdef np.ndarray[double, ndim=1, mode='c'] bias = np.zeros(shape=(3,))
-        bias[0] = self.c_obj.integralFBx
-        bias[1] = self.c_obj.integralFBy
-        bias[2] = self.c_obj.integralFBz
+        bias[0] = -self.c_obj.integralFBx
+        bias[1] = -self.c_obj.integralFBy
+        bias[2] = -self.c_obj.integralFBz
         return quat, bias
 
     @cython.boundscheck(False)  # turn off bounds-checking for entire function
@@ -345,9 +345,9 @@ cdef class MahonyAHRS:
                 quat[i, 1] = self.c_obj.q1
                 quat[i, 2] = self.c_obj.q2
                 quat[i, 3] = self.c_obj.q3
-                bias[i, 0] = self.c_obj.integralFBx
-                bias[i, 1] = self.c_obj.integralFBy
-                bias[i, 2] = self.c_obj.integralFBz
+                bias[i, 0] = -self.c_obj.integralFBx
+                bias[i, 1] = -self.c_obj.integralFBy
+                bias[i, 2] = -self.c_obj.integralFBz
         else:
             assert mag.shape[0] == N
             assert mag.shape[1] == 3
@@ -359,7 +359,7 @@ cdef class MahonyAHRS:
                 quat[i, 1] = self.c_obj.q1
                 quat[i, 2] = self.c_obj.q2
                 quat[i, 3] = self.c_obj.q3
-                bias[i, 0] = self.c_obj.integralFBx
-                bias[i, 1] = self.c_obj.integralFBy
-                bias[i, 2] = self.c_obj.integralFBz
+                bias[i, 0] = -self.c_obj.integralFBx
+                bias[i, 1] = -self.c_obj.integralFBy
+                bias[i, 2] = -self.c_obj.integralFBz
         return quat, bias

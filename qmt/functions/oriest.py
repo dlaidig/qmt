@@ -255,7 +255,7 @@ def oriEstIMU(gyr, acc, mag=None, params=None, debug=False, plot=False):
         assert initQuat.shape == (4,), 'invalid initQuat shape'
         assert initBias.shape == (3,), 'invalid initBias shape'
 
-        oriEstImu.resetEstimation(initQuat, initBias)
+        oriEstImu.resetEstimation(initQuat, -initBias)
 
     quat, bias, disagreement = oriEstImu.updateBatch(acc, gyr, mag)
 
@@ -265,7 +265,7 @@ def oriEstIMU(gyr, acc, mag=None, params=None, debug=False, plot=False):
             quat_norm=vecnorm(quat),
             quat_euler=eulerAngles(quat),
             diagreement=disagreement,
-            bias=bias,
+            bias=-bias,
         )
         if plot:
             oriEstIMU_debugPlot(debugData, plot)

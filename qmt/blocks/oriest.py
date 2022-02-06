@@ -178,5 +178,5 @@ class OriEstIMUBlock(qmt.Block):
         quat, bias, error = self.obj.update(acc, gyr, mag)
         if not debug:
             return quat
-        debug = dict(bias=bias, disAngle=error)
+        debug = dict(bias=-bias, disAngle=error)
         return quat, debug
