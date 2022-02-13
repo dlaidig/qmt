@@ -20,8 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Support for the [VQF orientation estimation algorithm](https://github.com/dlaidig/vqf) (`qmt.oriEstVQF`,
-  `qmt.oriEstBasicVQF`, `qmt.oriEstOfflineVQF`, `qmt.OriEstVQFBlock`.
-- Orientation estimation demo (`examples/orientation_estimation_demo.py`)
+  `qmt.oriEstBasicVQF`, `qmt.oriEstOfflineVQF`, `qmt.OriEstVQFBlock`).
+- Orientation estimation demo (`examples/orientation_estimation_demo.py`).
 - Simple magnetometer calibration function function `qmt.calibrateMagnetometerSimple`.
 - Lowpass filter block `qmt.LowpassFilterBlock`.
 ### Changed

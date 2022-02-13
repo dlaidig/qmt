@@ -159,6 +159,25 @@ line plots and as 3D arrows. This demo can be used to explain what IMUs measure.
 
     qmt-webapp --datasource '{"class": "qmt.DummyImuDataSource", "Ts": 0.04}' /demo/imu-raw-data
 
+Orientation Estimation Demo (/demo/orientation-estimation)
+==========================================================
+
+.. image:: images/webapp-demo-orientation-estimation.png
+  :alt: screenshot of orientation-estimation webapp
+
+Real-time comparison of different IMU orientation estimation algorithms. Two algorithms can be run side-by-side, and
+parameters can be adjusted on the fly. The right sidebar shows various plots to gain insight into the behavior of the
+algorithms. To run the demo, execute the Python script ``orientation_estimation_demo.py`` in the
+`examples/ <https://github.com/dlaidig/qmt/tree/main/examples>`__ folder of the repository.
+
+By default, the :class:`qmt.DummyImuDataSource` is used to generate some fake IMU data as input for the algorithms. To
+connect this demo with a real IMU, implement a compatible :class:`qmt.AbstractDataSource` and configure the demo to use
+your custom data source:
+
+.. code-block:: sh
+
+    ./orientation_estimation_demo.py '{"class": "my_module.MyImuDataSource", "device": "6fb3fe"}'
+
 Euler Angles Demo Tool (/demo/euler-angles)
 ===========================================
 
