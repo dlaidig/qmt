@@ -57,6 +57,9 @@ Python data processing functions
 **Orientation estimation functions**
 
 .. autosummary::
+    qmt.oriEstVQF
+    qmt.oriEstBasicVQF
+    qmt.oriEstOfflineVQF
     qmt.oriEstMadgwick
     qmt.oriEstMahony
     qmt.oriEstIMU
@@ -79,6 +82,11 @@ Python data processing functions
 
 .. autosummary::
     qmt.jointAxisEstHingeOlsson
+
+**Calibration functions**
+
+.. autosummary::
+    qmt.calibrateMagnetometerSimple
 
 **Optical mocap functions**
 
@@ -188,6 +196,12 @@ Utilities
 Orientation estimation functions
 ================================
 
+.. autofunction:: qmt.oriEstVQF
+
+.. autofunction:: qmt.oriEstBasicVQF
+
+.. autofunction:: qmt.oriEstOfflineVQF
+
 .. autofunction:: qmt.oriEstMadgwick
 
 .. autofunction:: qmt.oriEstMahony
@@ -215,6 +229,12 @@ Joint estimation functions
 ==========================
 
 .. autofunction:: qmt.jointAxisEstHingeOlsson
+
+
+Calibration functions
+=====================
+
+.. autofunction:: qmt.calibrateMagnetometerSimple
 
 
 Optical mocap functions

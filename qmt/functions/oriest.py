@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: MIT
 
 import numpy as np
-from qmt.utils.misc import setDefaults
+from qmt.utils.misc import setDefaults, startStopInd
 from qmt.utils.plot import AutoFigure
 from qmt.functions.utils import vecnorm, normalized
 from qmt.functions.quaternion import eulerAngles, _plotQuatEuler, qmult, rotate
@@ -19,6 +19,247 @@ def _calcAccMagDisAngle(quat, acc, mag):
     else:
         magDis = np.zeros(quat.shape[0])
     return np.column_stack([accDis, magDis])
+
+
+def oriEstVQF(gyr, acc, mag=None, params=None, debug=False, plot=False):
+    """
+    VQF orientation estimation algorithm.
+
+    See (TODO: link to publication) and https://github.com/dlaidig/vqf for more information about this algorithm.
+
+    If potential real-time capability is not needed, use the offline version :meth:`qmt.oriEstOfflineVQF` for improved
+    accuray. This algorithm is also available as an online data processing block: :class:`qmt.OriEstVQFBlock`.
+
+    :param gyr: Nx3 array with gyroscope measurements [rad/s]
+    :param acc: Nx3 array with accelerometer measurements [m/s^2]
+    :param mag: Nx3 array with magnetometer measurements or None [any unit]
+    :param params: A dictionary of parameters for orientation estimation. ``Ts`` is mandatory and specifies the sample
+        time of measurement data in seconds. All other parameters are optional and the default values should be
+        sufficient for most applications. See https://vqf.readthedocs.io/ for the documentation of the all
+        possible parameters.
+    :param debug: enables debug output
+    :param plot: enables debug plot
+    :return:
+        - **quat**: Nx4 quaternion output array
+        - **debug**: dict with debug values (only if debug==True)
+    """
+    params = params.copy()
+    Ts = params.pop('Ts')
+
+    acc = np.ascontiguousarray(acc, dtype=float)
+    gyr = np.ascontiguousarray(gyr, dtype=float)
+    if mag is not None:
+        mag = np.ascontiguousarray(mag, dtype=float)
+
+    assert(acc.shape == gyr.shape)
+    assert(acc.shape[1] == 3)
+    assert(mag is None or mag.shape == acc.shape)
+
+    from vqf import VQF
+    vqf = VQF(Ts, **params)
+    if debug or plot:
+        out = vqf.updateBatchFullState(gyr, acc, mag)
+    else:
+        out = vqf.updateBatch(gyr, acc, mag)
+    quat = out['quat6D'] if mag is None else out['quat9D']
+
+    if debug or plot:
+        disagreement = _calcAccMagDisAngle(quat, acc, mag)
+        debugData = dict(
+            quat=quat,
+            quat_norm=vecnorm(quat),
+            quat_euler=eulerAngles(quat),
+            diagreement=disagreement
+        )
+        debugData.update(out)
+        if plot:
+            oriEstVQF_debugPlot(debugData, plot)
+        if debug:
+            return quat, debugData
+        pass
+
+    return quat
+
+
+def oriEstVQF_debugPlot(debug, fig=None):
+    with AutoFigure(fig) as fig:
+        fig.suptitle(AutoFigure.title('oriEstVQF'))
+        (ax1, ax2), (ax3, ax4) = fig.subplots(2, 2, sharex=True)
+
+        style = _plotQuatEuler(ax1, ax2, debug, 'quat', 'output')
+
+        ax3.plot(np.rad2deg(debug['bias']), style)
+        ax3.plot(np.rad2deg(debug['biasSigma']), style+'C3')
+        ax3.plot(np.nan, color='C2', lw=6, alpha=0.3)
+        ax3.legend(['x', 'y', 'z', 'σ', 'rest'])
+        for start, stop in zip(*startStopInd(debug['restDetected'])):
+            ax3.axvspan(start, stop, color='C2', alpha=0.2)
+        ax3.set_title(f'estimated bias and uncertainty σ in °/s, {debug["bias"].shape}')
+        ax3.grid()
+
+        ax4.plot(np.rad2deg(debug['diagreement']), style)
+        ax4.plot(np.nan, color='C3', lw=6, alpha=0.3)
+        ax4.legend(['acc', 'mag', 'magDist'])
+        for start, stop in zip(*startStopInd(debug['magDistDetected'])):
+            ax4.axvspan(start, stop, color='C3', alpha=0.2)
+        ax4.set_title(f'diagreement in °, {debug["diagreement"].shape} ')
+        ax4.grid()
+
+        fig.tight_layout()
+
+
+def oriEstBasicVQF(gyr, acc, mag=None, params=None, debug=False, plot=False):
+    """
+    Basic version of the VQF orientation estimation algorithm (no rest detection, no gyroscope bias estimation, no
+    magnetic disturbance rejection).
+
+    See (TODO: link to publication) and https://github.com/dlaidig/vqf for more information about this algorithm.
+
+    :param gyr: Nx3 array with gyroscope measurements [rad/s]
+    :param acc: Nx3 array with accelerometer measurements [m/s^2]
+    :param mag: Nx3 array with magnetometer measurements or None [any unit]
+    :param params: A dictionary of parameters for orientation estimation. ``Ts`` is mandatory and specifies the sample
+        time of measurement data in seconds. The other two parameters are ``tauAcc`` and ``tauMag``, see
+        https://vqf.readthedocs.io/ for more information.
+    :param debug: enables debug output
+    :param plot: enables debug plot
+    :return:
+        - **quat**: Nx4 quaternion output array
+        - **debug**: dict with debug values (only if debug==True)
+    """
+    params = params.copy()
+    Ts = params.pop('Ts')
+
+    acc = np.ascontiguousarray(acc, dtype=float)
+    gyr = np.ascontiguousarray(gyr, dtype=float)
+    if mag is not None:
+        mag = np.ascontiguousarray(mag, dtype=float)
+
+    assert(acc.shape == gyr.shape)
+    assert(acc.shape[1] == 3)
+    assert(mag is None or mag.shape == acc.shape)
+
+    from vqf import BasicVQF
+    vqf = BasicVQF(Ts, **params)
+    if debug or plot:
+        out = vqf.updateBatchFullState(gyr, acc, mag)
+    else:
+        out = vqf.updateBatch(gyr, acc, mag)
+    quat = out['quat6D'] if mag is None else out['quat9D']
+
+    if debug or plot:
+        disagreement = _calcAccMagDisAngle(quat, acc, mag)
+        debugData = dict(
+            quat=quat,
+            quat_norm=vecnorm(quat),
+            quat_euler=eulerAngles(quat),
+            diagreement=disagreement
+        )
+        debugData.update(out)
+        if plot:
+            oriEstBasicVQF_debugPlot(debugData, plot)
+        if debug:
+            return quat, debugData
+        pass
+
+    return quat
+
+
+def oriEstBasicVQF_debugPlot(debug, fig=None):
+    with AutoFigure(fig) as fig:
+        fig.suptitle(AutoFigure.title('oriEstBasicVQF'))
+        (ax1, ax2), (ax3, ax4) = fig.subplots(2, 2, sharex=True)
+
+        style = _plotQuatEuler(ax1, ax2, debug, 'quat', 'output')
+
+        ax3.axis('off')
+        ax3.text(0.5, 0.5, 'oriEstBasicVQF does not estimate gyroscope bias', ha='center', transform=ax3.transAxes)
+
+        ax4.plot(np.rad2deg(debug['diagreement']), style)
+        ax4.set_title(f'diagreement in °, {debug["diagreement"].shape} ')
+        ax4.legend(['acc', 'mag'])
+        ax4.grid()
+        fig.tight_layout()
+
+
+def oriEstOfflineVQF(gyr, acc, mag=None, params=None, debug=False, plot=False):
+    """
+    Offline version of the VQF orientation estimation algorithm.
+
+    See (TODO: link to publication) and https://github.com/dlaidig/vqf for more information about this algorithm.
+
+    :param gyr: Nx3 array with gyroscope measurements [rad/s]
+    :param acc: Nx3 array with accelerometer measurements [m/s^2]
+    :param mag: Nx3 array with magnetometer measurements or None [any unit]
+    :param params: A dictionary of parameters for orientation estimation. ``Ts`` is mandatory and specifies the sample
+        time of measurement data in seconds. All other parameters are optional and the default values should be
+        sufficient for most applications. See https://vqf.readthedocs.io/ for the documentation of the all
+        possible parameters.
+    :param debug: enables debug output
+    :param plot: enables debug plot
+    :return:
+        - **quat**: Nx4 quaternion output array
+        - **debug**: dict with debug values (only if debug==True)
+    """
+    params = params.copy()
+    Ts = params.pop('Ts')
+
+    acc = np.ascontiguousarray(acc, dtype=float)
+    gyr = np.ascontiguousarray(gyr, dtype=float)
+    if mag is not None:
+        mag = np.ascontiguousarray(mag, dtype=float)
+
+    assert(acc.shape == gyr.shape)
+    assert(acc.shape[1] == 3)
+    assert(mag is None or mag.shape == acc.shape)
+
+    from vqf import offlineVQF
+    out = offlineVQF(gyr, acc, mag, Ts, params)
+    quat = out['quat6D'] if mag is None else out['quat9D']
+
+    if debug or plot:
+        disagreement = _calcAccMagDisAngle(quat, acc, mag)
+        debugData = dict(
+            quat=quat,
+            quat_norm=vecnorm(quat),
+            quat_euler=eulerAngles(quat),
+            diagreement=disagreement
+        )
+        debugData.update(out)
+        if plot:
+            oriEstVQF_debugPlot(debugData, plot)
+        if debug:
+            return quat, debugData
+        pass
+
+    return quat
+
+
+def oriEstOfflineVQF_debugPlot(debug, fig=None):
+    with AutoFigure(fig) as fig:
+        fig.suptitle(AutoFigure.title('oriEstOfflineVQF'))
+        (ax1, ax2), (ax3, ax4) = fig.subplots(2, 2, sharex=True)
+
+        style = _plotQuatEuler(ax1, ax2, debug, 'quat', 'output')
+
+        ax3.plot(np.rad2deg(debug['bias']), style)
+        ax3.plot(np.rad2deg(debug['biasSigma']), style + 'C3')
+        ax3.plot(np.nan, color='C2', lw=6, alpha=0.3)
+        ax3.legend(['x', 'y', 'z', 'σ', 'rest'])
+        for start, stop in zip(*startStopInd(debug['restDetected'])):
+            ax3.axvspan(start, stop, color='C2', alpha=0.2)
+        ax3.set_title(f'estimated bias and uncertainty σ in °/s, {debug["bias"].shape}')
+        ax3.grid()
+
+        ax4.plot(np.rad2deg(debug['diagreement']), style)
+        ax4.plot(np.nan, color='C3', lw=6, alpha=0.3)
+        ax4.legend(['acc', 'mag', 'magDist'])
+        for start, stop in zip(*startStopInd(debug['magDistDetected'])):
+            ax4.axvspan(start, stop, color='C3', alpha=0.2)
+        ax4.set_title(f'diagreement in °, {debug["diagreement"].shape} ')
+        ax4.grid()
+
+        fig.tight_layout()
 
 
 def oriEstMadgwick(gyr, acc, mag=None, params=None, debug=False, plot=False):

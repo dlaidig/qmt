@@ -40,12 +40,17 @@ from .functions.quaternion import posScalar, posScalar_debugPlot
 from .functions.quaternion import deltaQuat, deltaQuat_debugPlot
 from .functions.quaternion import addHeading, addHeading_debugPlot
 
+from .functions.oriest import oriEstVQF, oriEstVQF_debugPlot
+from .functions.oriest import oriEstBasicVQF, oriEstBasicVQF_debugPlot
+from .functions.oriest import oriEstOfflineVQF, oriEstOfflineVQF_debugPlot
 from .functions.oriest import oriEstMadgwick, oriEstMadgwick_debugPlot
 from .functions.oriest import oriEstMahony, oriEstMahony_debugPlot
 from .functions.oriest import oriEstIMU, oriEstIMU_debugPlot
 
-from qmt.functions.reset import resetAlignment, resetAlignment_debugPlot
-from qmt.functions.reset import resetHeading, resetHeading_debugPlot
+from .functions.reset import resetAlignment, resetAlignment_debugPlot
+from .functions.reset import resetHeading, resetHeading_debugPlot
+
+from .functions.calibration import calibrateMagnetometerSimple, calibrateMagnetometerSimple_debugPlot
 
 from .functions.utils import wrapToPi, wrapToPi_debugPlot
 from .functions.utils import wrapTo2Pi, wrapTo2Pi_debugPlot
