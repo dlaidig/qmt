@@ -76,4 +76,5 @@ from .functions.heading_correction import removeHeadingDriftForStraightWalk_debu
 from .functions.joint_axis_est_hinge_olsson import jointAxisEstHingeOlsson, jointAxisEstHingeOlsson_debugPlot
 
 from .blocks.core import Block
-from .blocks.oriest import OriEstMadgwickBlock, OriEstMahonyBlock, OriEstIMUBlock
+from .blocks.oriest import OriEstVQFBlock, OriEstMadgwickBlock, OriEstMahonyBlock, OriEstIMUBlock
+from .blocks.utils import LowpassFilterBlock

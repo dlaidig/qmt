@@ -7,11 +7,16 @@ Python data processing blocks
 
 .. autosummary::
     qmt.Block
+    qmt.OriEstVQFBlock
     qmt.OriEstMadgwickBlock
     qmt.OriEstMahonyBlock
     qmt.OriEstIMUBlock
+    qmt.LowpassFilterBlock
 
 .. autoclass:: qmt.Block
+   :members:
+
+.. autoclass:: qmt.OriEstVQFBlock
    :members:
 
 .. autoclass:: qmt.OriEstMadgwickBlock
@@ -21,4 +26,7 @@ Python data processing blocks
    :members:
 
 .. autoclass:: qmt.OriEstIMUBlock
+   :members:
+
+.. autoclass:: qmt.LowpassFilterBlock
    :members:

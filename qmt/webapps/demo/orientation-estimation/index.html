@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<!--
+SPDX-FileCopyrightText: 2021 Daniel Laidig <laidig@control.tu-berlin.de>
+
+SPDX-License-Identifier: MIT
+-->
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html" charset="utf-8"/>
+    <title>IMU Orientation Estimation</title>
+    <link rel="stylesheet" href="/lib-qmt/style.css">
+    <style>
+        html, body, #app {
+            height: 100%;
+        }
+        .angleLabel {
+            display: inline-block;
+            min-width: 1em;
+            text-align: right;
+        }
+    </style>
+</head>
+<script type="module">
+    import { Vue, BABYLON, _ } from '/lib-qmt/lib-qmt.js'
+    import { UiPlugin, Backend, Scene, IMUBox, Arrow } from '/lib-qmt/lib-qmt.js'
+    import { COLORS, Quaternion, normalizeVec, rad2deg, deg2rad, wrapToPi, round, vecNorm } from '/lib-qmt/lib-qmt.js'
+
+    class MainScene extends Scene {
+        constructor(canvas, cs) {
+            super(canvas)
+
+            this.cameraRotSteps = 2
+            this.deltaQuat = Quaternion.identity()
+            this.scale = 0.8
+
+            this.camera = new BABYLON.ArcRotateCamera('camera', -Math.PI/2, 1, 30, new BABYLON.Vector3(0, 0, 0), this.scene)
+            this.camera.parent = this.cameraTransform
+            this.camera.storeState()
+            this.camera.attachControl(true)
+            this.light = new BABYLON.HemisphericLight('light1', new BABYLON.Vector3(0, 1, 0), this.scene)
+            this.light2 = new BABYLON.DirectionalLight('light2', new BABYLON.Vector3(0.2, 0, -0.1), this.scene)
+
+            const shift = 5
+            this.imu1 = new IMUBox(this.scene, {axes: false, letter: 'A', cs: cs})
+            this.imu1.box.position.x = shift
+            this.imu2 = new IMUBox(this.scene, {axes: false, letter: 'B', cs: cs})
+            this.imu2.box.position.x = -shift
+
+            const diameter = 0.15
+
+            this.accRefCyl1 = new Arrow(this.scene, {origin: [shift, 0, 0], diameter: diameter, scale: this.scale})
+            this.accRefCyl2 = new Arrow(this.scene, {origin: [-shift, 0, 0],  diameter: diameter, scale: this.scale})
+            this.accRefCyl1.setVector([0,0,9.8])
+            this.accRefCyl2.setVector([0,0,9.8])
+
+            this.accCyl1 = new Arrow(this.scene, {origin: [shift, 0, 0],  diameter: diameter, scale: this.scale, color: COLORS.C9})
+            this.accCyl1.setVector([0,0,0])
+            this.accCyl2 = new Arrow(this.scene, {origin: [-shift, 0, 0],  diameter: diameter, scale: this.scale, color: COLORS.C9})
+            this.accCyl2.setVector([0,0,0])
+
+            this.magCyl1 = new Arrow(this.scene, {origin: [shift, 0, 0],  diameter: diameter, scale: 7, color: COLORS.C2})
+            this.magCyl1.setVector([0,0,0])
+            this.magCyl2 = new Arrow(this.scene, {origin: [-shift, 0, 0],  diameter: diameter, scale: 7, color: COLORS.C2})
+            this.magCyl2.setVector([0,0,0])
+
+            this.magHCyl1 = new Arrow(this.scene, {origin: [shift, 0, 0],  diameter: diameter, scale: 7, color: COLORS.C2})
+            this.magHCyl1.setVector([0,0,0])
+            this.magHCyl2 = new Arrow(this.scene, {origin: [-shift, 0, 0],  diameter: diameter, scale: 7, color: COLORS.C2})
+            this.magHCyl2.setVector([0,0,0])
+
+            this.magHRefCyl1 = new Arrow(this.scene, {origin: [shift, 0, 0],  diameter: diameter, scale: 7})
+            this.magHRefCyl2 = new Arrow(this.scene, {origin: [-shift, 0, 0],  diameter: diameter, scale: 7})
+
+            this.floor = new FloorBox(this.scene)
+
+            this.rotate()
+        }
+
+        onSample(sample) {
+            const q1 = this.deltaQuat.multiply(new Quaternion(sample.quatA))
+            const q2 = this.deltaQuat.multiply(new Quaternion(sample.quatB))
+
+            this.imu1.quat = q1
+            this.imu2.quat = q2
+
+            this.accCyl1.setVector(q1.rotate(sample.acc1))
+            this.accCyl2.setVector(q2.rotate(sample.acc1))
+
+            const mag1 = q1.rotate(sample.magA.map(x => x/50))
+            const mag2 = q2.rotate(sample.magB.map(x => x/50))
+            this.magCyl1.setVector(mag1)
+            this.magCyl2.setVector(mag2)
+            mag1[2] = 0
+            mag2[2] = 0
+            this.magHCyl1.setVector(normalizeVec(mag1))
+            this.magHCyl2.setVector(normalizeVec(mag2))
+        }
+
+        rotate() {
+            this.camera.restoreState()
+
+            const q1 = this.deltaQuat.conj().multiply(this.imu1.quat)
+            const q2 = this.deltaQuat.conj().multiply(this.imu2.quat)
+
+            this.cameraRotSteps = (this.cameraRotSteps+1) % 4
+            this.deltaQuat = Quaternion.fromAngleAxis(this.cameraRotSteps*Math.PI/2, [0, 0, 1])
+
+            this.imu1.quat = this.deltaQuat.multiply(q1)
+            this.imu2.quat = this.deltaQuat.multiply(q2)
+
+            this.magHRefCyl1.setVector(this.deltaQuat.rotate([0,1,0]))
+            this.magHRefCyl2.setVector(this.deltaQuat.rotate([0,1,0]))
+
+            this.floor.deltaQuat = this.deltaQuat
+        }
+    }
+
+    class FloorBox {
+        constructor(scene) {
+            const options = {
+                width: 20,
+                height: 20,
+                depth: 0.01,
+            }
+            this.box = BABYLON.MeshBuilder.CreateBox('box', options, scene)
+
+            this.box.material = new BABYLON.StandardMaterial('mat', scene)
+            this.box.material.diffuseColor = COLORS.grey
+            this.box.material.alpha = 0.15
+
+
+            this.plane = BABYLON.MeshBuilder.CreatePlane('compassPlane', { size: 3, sideOrientation: BABYLON.Mesh.DOUBLESIDE })
+            this.plane.position.x = -8.0
+            this.plane.position.y = 8.0
+            this.plane.position.z = 0.1
+
+            this.mat = new BABYLON.StandardMaterial('compassMat')
+            this.mat.diffuseTexture = new BABYLON.Texture('/lib-qmt/assets/compass_rose_north.svg', scene)
+            this.mat.diffuseTexture.hasAlpha = true
+            this.mat.useAlphaFromDiffuseTexture = true
+            this.plane.material = this.mat
+        }
+
+        set deltaQuat(q) {
+            this.plane.rotationQuaternion = q.babylon()
+        }
+    }
+
+    const OriEstControlPanel = Vue.defineComponent({
+        template: `
+            <UiPanel title="IMU A" :collapsible="false">
+                <template #header>
+                    <UiDropdown
+                        v-model="algorithm" :options="algorithms" class="form-select-sm float-end"
+                        style="width: 50%"
+                    />
+                </template>
+                <template #default>
+                    <UiOriEstParamsMadgwick v-if="algorithm == 'Madgwick'" v-model="params_Madgwick" />
+                    <UiOriEstParamsMahony v-if="algorithm == 'Mahony'" v-model="params_Mahony" />
+                    <UiOriEstParamsOriEstIMU v-if="algorithm == 'OriEstIMU'" v-model="params_OriEstIMU" />
+                    <UiOriEstParamsVQF v-if="algorithm == 'VQF'" v-model="params_VQF" />
+                    <UiButton class="mt-3" style="width: 100%;" @click="reset">Reset state</UiButton>
+                </template>
+            </UiPanel>
+        `,
+        props: {
+            backend: Object,
+            imu: String,
+        },
+        data() {
+            return {
+                algorithm: this.imu === 'A' ? 'Madgwick' : 'VQF',
+                algorithms: ['Madgwick', 'Mahony', 'OriEstIMU', 'VQF'],
+                params_Madgwick: {},
+                params_Mahony: {},
+                params_OriEstIMU: {},
+                params_VQF: {},
+            }
+        },
+        mounted() {
+            this.backend.addParam(this, 'algorithm', 'algorithm'+this.imu)
+            this.backend.addParam(this, 'params_Madgwick', 'params_'+this.imu+'_Madgwick')
+            this.backend.addParam(this, 'params_Mahony', 'params_'+this.imu+'_Mahony')
+            this.backend.addParam(this, 'params_OriEstIMU', 'params_'+this.imu+'_OriEstIMU')
+            this.backend.addParam(this, 'params_VQF', 'params_'+this.imu+'_VQF')
+        },
+        methods: {
+            reset() {
+                this.backend.sendCommand(['reset'+this.imu])
+            },
+        }
+    })
+
+    const OriEstABControlPanel = Vue.defineComponent({
+        template: `
+            <div class="container mt-3">
+                <div class="row">
+                    <div class="col pe-2">
+                        <OriEstControlPanel imu='A' :backend="backend" />
+                    </div>
+                    <div class="col ps-2">
+                        <OriEstControlPanel imu='B' :backend="backend" />
+                    </div>
+                </div>
+            </div>
+        `,
+        components: { OriEstControlPanel },
+        props: {
+            backend: Object,
+        },
+    })
+
+    const MagCalibControls = Vue.defineComponent({
+        template: `
+            <UiButton style="width: 100%;" :variant="variant" @click="calibrate">
+                {{ buttonText }}
+                <UiInfoTooltipIcon class="float-end" :tooltip="tooltip" />
+            </UiButton>
+            <UiCheckbox v-model="applyMagCalibA">Apply calibration parameters to IMU A</UiCheckbox>
+            <UiCheckbox v-model="applyMagCalibB">Apply calibration parameters to IMU B</UiCheckbox>
+        `,
+        props: {
+            backend: Object,
+        },
+        data() {
+            return {
+                applyMagCalibA: true,
+                applyMagCalibB: true,
+                state: undefined,
+                tooltip: `Performs magnetometer calibration. Hold the sensor at a fixed location that is away from
+                    metal and electronic devices and, after clicking the button, slowly rotate the sensor in all
+                    directions until calibration is complete.`
+            }
+        },
+        computed: {
+            variant() {
+                if (this.state === 0.0) { // not calibrated
+                    return 'danger'
+                } else if (this.state === 1.0) { // calibration finished
+                    return 'success'
+                } else if (this.state > 0) {
+                    return 'warning' // calibrating
+                }
+                return 'secondary'
+            },
+            buttonText() {
+                if (this.state > 0 && this.state !== 1.0) {
+                    return 'Calibrating... (' + Math.floor(this.state*100) + ' %)'
+                }
+                return 'Calibrate Magnetometer'
+            },
+        },
+        mounted() {
+            this.backend.on('sample', sample => {
+                this.state = sample.mag_calib.state
+            })
+            this.backend.addParam(this, 'applyMagCalibA')
+            this.backend.addParam(this, 'applyMagCalibB')
+        },
+        methods: {
+            calibrate() {
+                this.backend.sendCommand(['startMagCalib'])
+            },
+        }
+    })
+
+    const InfoPanels = Vue.defineComponent({
+        template: `
+            <div class="container mt-3">
+                <UiPanel title="Raw Data" collapsed :infoTooltip="tooltips.raw">
+                    <p>Gyroscope [°/s]</p>
+                    <UiLinePlot
+                        :source="backend" :signals="['zero', 'gyr1.0', 'gyr1.1', 'gyr1.2']"
+                        :style="plotStyle"
+                        :labels="[undefined, 'x', 'y', 'z']"
+                        :colors="['black', 'C3', 'C2', 'C0']"
+                        :ylim="[-360, 360]" :scaleFactor="180/Math.PI"
+                    />
+                    <p>Accelerometer [m/s²]</p>
+                    <UiLinePlot
+                        :source="backend" :signals="['zero', 'acc1.0', 'acc1.1', 'acc1.2']"
+                        :style="plotStyle"
+                        :labels="[undefined, 'x', 'y', 'z']"
+                        :colors="['black', 'C3', 'C2', 'C0']"
+                        :ylim="[-20, 20]"
+                    />
+                    <p>Magnetometer [µT]</p>
+                    <UiLinePlot
+                        :source="backend" :signals="['mag_raw.0', 'mag_raw.1', 'mag_raw.2', 'zero', 'mag1.0', 'mag1.1', 'mag1.2']"
+                        :style="plotStyle"
+                        :labels="['', '', '', '', 'x', 'y', 'z']"
+                        :colors="['#cccccc', '#cccccc', '#cccccc', 'black', 'C3', 'C2', 'C0']"
+                        :ylim="[-100, 100]"
+                    />
+                </UiPanel>
+                <UiPanel title="Disagreement Plots" collapsed :infoTooltip="tooltips.disagreement">
+                    <UiLinePlot
+                        :source="backend" :signals="['debugA.disAngle.0', 'debugA.disAngle.1']"
+                        :style="plotStyle"
+                        :labels="['acc IMU A', 'mag IMU A']"
+                        :colors="['C0', 'C2']"
+                        :ylim="[0, 45]" :scaleFactor="180/Math.PI"
+                    >
+                        <template #legendExtra="slotProps">({{ errorA_lp[slotProps.index] }}°) </template>
+                    </UiLinePlot>
+                    <UiLinePlot
+                        :source="backend" :signals="['debugB.disAngle.0', 'debugB.disAngle.1']"
+                        :style="plotStyle"
+                        :labels="['acc IMU B', 'mag IMU B']"
+                        :colors="['C0', 'C2']"
+                        :ylim="[0, 45]" :scaleFactor="180/Math.PI"
+                    >
+                        <template #legendExtra="slotProps">({{ errorB_lp[slotProps.index] }}°) </template>
+                    </UiLinePlot>
+                </UiPanel>
+                <UiPanel title="Magnetic Field" collapsed :infoTooltip="tooltips.mag">
+                    <p>Norm of the Magnetic Field [°]</p>
+                    <UiLinePlot
+                        :source="backend" :signals="['mag_field_raw.norm', 'norm_berlin', 'mag_field.norm']"
+                        :style="plotStyle"
+                        :colors="['#cccccc', 'black', 'C0']"
+                        :ylim="[0, 100]"
+                    />
+                    <p>Inclination of the Magnetic Field (Dip Angle) [°]</p>
+                    <UiLinePlot
+                        :source="backend" :style="plotStyle" :signals="['mag_field_raw.dip', 'dip_berlin', 'mag_field.dip']"
+                        :colors="['#cccccc', 'black', 'C0']" :ylim="[-90, 90]"
+                    />
+                    <p>Heading Disturbance [°]</p>
+                    <UiLinePlot
+                        :source="backend" :style="plotStyle" :signals="['mag_field_raw.heading_hp', 'zero', 'mag_field.heading_hp']"
+                        :colors="['#cccccc', 'black', 'C0']"  :ylim="[-180, 180]"
+                    />
+                    <MagCalibControls :backend="backend" />
+                </UiPanel>
+                <UiPanel title="Magnetic Disturbance Rejection" collapsed :infoTooltip="tooltips.magdist">
+                   <div v-if="algorithmA=='VQF'">
+                        <p>IMU A</p>
+                        <UiLinePlot
+                            :source="backend" :style="plotStyle"
+                            :signals="['vqfA.norm', 'vqfA.magRefNorm', 'vqfA.magCandidateNorm', 'vqfA.dist']"
+                            :labels="['', 'norm ref', 'norm candidate', 'dist']"
+                            :colors="['#cccccc', 'C0', 'C1', 'C3']" :ylim="[0, 100]"
+                        />
+                        <UiLinePlot
+                            :source="backend" :style="plotStyle"
+                            :signals="['vqfA.dip', 'vqfA.magRefDip', 'vqfA.magCandidateDip', 'vqfA.dist']"
+                            :labels="['', 'dip ref', 'dip candidate', 'dist']"
+                            :colors="['#cccccc', 'C0', 'C1', 'C3']" :ylim="[0, 90]"
+                        />
+                        <UiLinePlot
+                            :source="backend" :style="plotStyle"
+                            :signals="['vqfA.magRejectT', 'vqfA.magCandidateT', 'vqfA.aboveMinGyr', 'vqfA.dist']"
+                            :labels="['rejectT', 'candidateT', 'above min gyr', 'dist']"
+                            :ylim="[0, 60]"
+                        />
+                        <UiLinePlot
+                            :source="backend" :style="plotStyle"
+                            :signals="['vqfA.normdev', 'vqfA.dipdev', 'one']"
+                            :labels="['norm dev', 'dip dev', '']"
+                            :colors="['C0', 'C1', 'black']"
+                            :ylim="[0, 3]"
+                        />
+                    </div>
+                    <p v-else>
+                        IMU A: not available (VQF algorithm only)
+                    </p>
+                   <div v-if="algorithmB=='VQF'">
+                        <p>IMU B</p>
+                        <UiLinePlot
+                            :source="backend" :style="plotStyle"
+                            :signals="['vqfB.norm', 'vqfB.magRefNorm', 'vqfB.magCandidateNorm', 'vqfB.dist']"
+                            :labels="['', 'norm ref', 'norm candidate', 'dist']"
+                            :colors="['#cccccc', 'C0', 'C1', 'C3']" :ylim="[0, 100]"
+                        />
+                        <UiLinePlot
+                            :source="backend" :style="plotStyle"
+                            :signals="['vqfB.dip', 'vqfB.magRefDip', 'vqfB.magCandidateDip', 'vqfB.dist']"
+                            :labels="['', 'dip ref', 'dip candidate', 'dist']"
+                            :colors="['#cccccc', 'C0', 'C1', 'C3']" :ylim="[0, 90]"
+                        />
+                        <UiLinePlot
+                            :source="backend" :style="plotStyle"
+                            :signals="['vqfB.magRejectT', 'vqfB.magCandidateT', 'vqfB.aboveMinGyr', 'vqfB.dist']"
+                            :labels="['rejectT', 'candidateT', 'above min gyr', 'dist']"
+                            :ylim="[0, 60]"
+                        />
+                        <UiLinePlot
+                            :source="backend" :style="plotStyle"
+                            :signals="['vqfB.normdev', 'vqfB.dipdev', 'one']"
+                            :labels="['norm dev', 'dip dev', '']"
+                            :colors="['C0', 'C1', 'black']"
+                            :ylim="[0, 3]"
+                        />
+                    </div>
+                    <p v-else>
+                        IMU B: not available (VQF algorithm only)
+                    </p>
+                </UiPanel>
+                <UiPanel title="Filtered Acceleration in Inertial Frame" collapsed :infoTooltip="tooltips.filteredacc">
+                    <div v-if="algorithmA=='VQF'">
+                        <p>IMU A</p>
+                        <UiLinePlot
+                            :source="backend" :style="plotStyle"
+                            :signals="['vqfA.accI.0', 'vqfA.accI.1', 'vqfA.accI.2', 'zero', 'vqfA.lastAccLp.0', 'vqfA.lastAccLp.1', 'vqfA.lastAccLp.2']"
+                            :labels="['', '', '', '', 'accLp x', 'accLp y', 'accLp z']"
+                            :colors="['#cccccc', '#cccccc', '#cccccc', 'black', 'C3', 'C2', 'C0']"
+                            :ylim="[-15, 15]"
+                        />
+                    </div>
+                    <div v-else>
+                        IMU A: not available (VQF algorithm only)
+                    </div>
+                    <div v-if="algorithmB=='VQF'">
+                        <p>IMU B</p>
+                        <UiLinePlot
+                            :source="backend" :style="plotStyle"
+                            :signals="['vqfB.accI.0', 'vqfB.accI.1', 'vqfB.accI.2', 'zero', 'vqfB.lastAccLp.0', 'vqfB.lastAccLp.1', 'vqfB.lastAccLp.2']"
+                            :labels="['', '', '', '', 'accLp x', 'accLp y', 'accLp z']"
+                            :colors="['#cccccc', '#cccccc', '#cccccc', 'black', 'C3', 'C2', 'C0']"
+                            :ylim="[-15, 15]"
+                        />
+                    </div>
+                    <div v-else>
+                        IMU B: not available (VQF algorithm only)
+                    </div>
+                </UiPanel>
+                <UiPanel title="Simulation of Additional Gyro Bias" collapsed :infoTooltip="tooltips.biassim">
+                    <UiSlider :="biasSliderProps" label="x" v-model="bias_x" />
+                    <UiSlider :="biasSliderProps" label="y" v-model="bias_y" />
+                    <UiSlider :="biasSliderProps" label="z" v-model="bias_z" />
+                    <UiCheckbox v-model="biasSimEnabledA">Simulate additional bias for IMU A</UiCheckbox>
+                    <UiCheckbox v-model="biasSimEnabledB">Simulate additional bias for IMU B</UiCheckbox>
+                </UiPanel>
+                <UiPanel title="Estimated Bias" collapsed :infoTooltip="tooltips.biasest">
+                    <p>IMU A</p>
+                    <UiLinePlot
+                        :source="backend" :style="plotStyle"
+                        :signals="['gyrA_lp.0', 'gyrA_lp.1', 'gyrA_lp.2', 'zero', 'debugA.bias.0', 'debugA.bias.1', 'debugA.bias.2']"
+                        :labels="['', '', '', '', 'bias x', 'bias y', 'bias z']"
+                        :colors="['#cccccc', '#cccccc', '#cccccc', 'black', 'C3', 'C2', 'C0']"
+                        :ylim="[-3, 3]" :scaleFactor="180/Math.PI"
+                    />
+                    <UiLinePlot
+                        v-if="algorithmA=='VQF'"
+                        :source="backend" :style="plotStyle"
+                        :signals="['vqfA.sigma', 'vqfA.sigmaXYZ.0', 'vqfA.sigmaXYZ.1', 'vqfA.sigmaXYZ.2']"
+                        :labels="['uncertainty σ', 'σ x', 'σ y', 'σ z']"
+                        :colors="['black', 'C3', 'C2', 'C0']"
+                        :ylim="[0, 0.5]"
+                    />
+                    <p>IMU B</p>
+                    <UiLinePlot
+                        :source="backend" :style="plotStyle"
+                        :signals="['gyrB_lp.0', 'gyrB_lp.1', 'gyrB_lp.2', 'zero', 'debugB.bias.0', 'debugB.bias.1', 'debugB.bias.2']"
+                        :labels="['', '', '', '', 'bias x', 'bias y', 'bias z']"
+                        :colors="['#cccccc', '#cccccc', '#cccccc', 'black', 'C3', 'C2', 'C0']"
+                        :ylim="[-3, 3]" :scaleFactor="180/Math.PI"
+                    />
+                    <UiLinePlot
+                        v-if="algorithmB=='VQF'"
+                        :source="backend" :style="plotStyle"
+                        :signals="['vqfB.sigma', 'vqfB.sigmaXYZ.0', 'vqfB.sigmaXYZ.1', 'vqfB.sigmaXYZ.2']"
+                        :labels="['uncertainty σ', 'σ x', 'σ y', 'σ z']"
+                        :colors="['black', 'C3', 'C2', 'C0']"
+                        :ylim="[0, 0.5]"
+                    />
+                </UiPanel>
+                <UiPanel title="Rest Detection" collapsed :infoTooltip="tooltips.rest">
+                    <div v-if="algorithmA=='VQF'">
+                        <p>IMU A</p>
+                        <UiLinePlot
+                            :source="backend" :style="plotStyle"
+                            :signals="['one', 'vqfA.gyrdev', 'vqfA.accdev', 'vqfA.magdev', 'vqfA.rest']"
+                            :labels="['', 'gyrdev', 'accdev', 'magdev', 'rest']"
+                            :colors="['black', 'C0', 'C1', 'C2', 'C3']"
+                            :ylim="[0, 3]"
+                        />
+                        <UiSlider v-model="restThGyrA" label="thGyr" :min="0.0" :max="6.0" :step="0.1" :ticks="[0, 2, 6]" labelWidth="4em" />
+                        <UiSlider v-model="restThAccA" label="thAcc" :min="0.0" :max="6.0" :step="0.1" :ticks="[0, 0.5, 6]" labelWidth="4em" />
+                        <UiSlider v-model="restThMagA" label="thMag" :min="0.0" :max="0.2" :step="0.01" :ticks="[0, 0.1, 0.2]"  labelWidth="4em" />
+                    </div>
+                    <div v-else>
+                        IMU A: not available (VQF algorithm only)
+                    </div>
+                    <div v-if="algorithmB=='VQF'">
+                        <p>IMU B</p>
+                        <UiLinePlot
+                            :source="backend" :style="plotStyle"
+                            :signals="['one', 'vqfB.gyrdev', 'vqfB.accdev', 'vqfB.magdev', 'vqfB.rest']"
+                            :labels="['', 'gyrdev', 'accdev', 'magdev', 'rest']"
+                            :colors="['black', 'C0', 'C1', 'C2', 'C3']"
+                            :ylim="[0, 3]"
+                        />
+                        <UiSlider v-model="restThGyrB" label="thGyr" :min="0.0" :max="6.0" :step="0.1" :ticks="[0, 2, 6]" labelWidth="4em" />
+                        <UiSlider v-model="restThAccB" label="thAcc" :min="0.0" :max="6.0" :step="0.1" :ticks="[0, 0.5, 6]" labelWidth="4em" />
+                        <UiSlider v-model="restThMagB" label="thMag" :min="0.0" :max="0.2" :step="0.01" :ticks="[0, 0.1, 0.2]"  labelWidth="4em" />
+                    </div>
+                    <div v-else>
+                        IMU B: not available (VQF algorithm only)
+                    </div>
+                </UiPanel>
+            </div>
+        `,
+        components: { MagCalibControls },
+        props: {
+            backend: Object,
+        },
+        data() {
+            return {
+                tooltips: {
+                    raw: `Plots of the raw IMU measurement data. The gray lines in the magnetometer plot show the
+                        uncalibrated sensor readings.`,
+                    disagreement: `Disagreement between vertical axis and last accelerometer sample and between
+                        north axis and horizontal projection of last magnetometer sample.`,
+                    mag: `Plots for basic properties of the current magnetic field and access to magnetometer
+                        calibration. The heading disturbance is based on high-pass filtering and only valid for short
+                        periods in a disturbed field. The gray lines show the values for the uncalibrated sensor
+                        readings.`,
+                    magdist: `Plots of the current state of the magnetic disturbance detection and rejection of the
+                        VQF algorithm.`,
+                    filteredacc: `Plot of the unfiltered (gray) and filtered acceleration in the gyroscope strapdown
+                        integration frame (VQF algorithm).`,
+                    biassim: `The bias defined by the sliders is added to the gyroscope measurements. This can be used
+                        to simulate IMUs with a large bias and to test bias estimation algorithms.`,
+                    biasest: `Plots to show the results of gyroscope bias estimation. The gray lines in the background
+                        show low-pass filtered gyroscope measurements.`,
+                    rest: `Plots and sliders to adjust the thresholds for the rest detection algorithm of VQF.`,
+                },
+                plotStyle: {width: '100%', height: '200px'},
+                biasSliderProps: {
+                    min: -3.0, max: 3.0, step: 0.1, ticks: [-3, -2, -1, 0,  1, 2, 3],
+                    labelWidth: "2em", valueLabel: this.formatBiasLabel, valueLabelWidth: "4em"
+                },
+                errorA_lp: [0, 0],
+                errorB_lp: [0, 0],
+                bias_x: 0.0,
+                bias_y: 0.0,
+                bias_z: 0.0,
+                biasSimEnabledA: true,
+                biasSimEnabledB: true,
+                restThGyrA: 2.0,
+                restThAccA: 0.5,
+                restThMagA: 0.1,
+                restThGyrB: 2.0,
+                restThAccB: 0.5,
+                restThMagB: 0.1,
+                algorithmA: 'none',
+                algorithmB: 'none',
+            }
+        },
+        computed: {
+            biasSim() {
+                return [this.bias_x, this.bias_y, this.bias_z]
+            },
+        },
+        mounted() {
+            this.backend.on('sample', sample => {
+                this.algorithmA = sample.algorithmA
+                this.algorithmB = sample.algorithmB
+                this.errorA_lp = round(rad2deg(sample.errorA_lp))
+                this.errorB_lp = round(rad2deg(sample.errorB_lp))
+            })
+            this.backend.addParam(this, 'biasSim')
+            this.backend.addParam(this, 'biasSimEnabledA')
+            this.backend.addParam(this, 'biasSimEnabledB')
+            this.backend.addParam(this, 'restThGyrA', 'param_A_VQF_restThGyr')
+            this.backend.addParam(this, 'restThAccA', 'param_A_VQF_restThAcc')
+            this.backend.addParam(this, 'restThMagA', 'param_A_VQF_restThMag')
+            this.backend.addParam(this, 'restThGyrB', 'param_B_VQF_restThGyr')
+            this.backend.addParam(this, 'restThAccB', 'param_B_VQF_restThAcc')
+            this.backend.addParam(this, 'restThMagB', 'param_B_VQF_restThMag')
+        },
+        methods: {
+            formatDisagreementLegend(val) {
+                return '<span style="display: inline-block; min-width: 2em; text-align: right;">('+Math.round(val)+'</span>°) '
+            },
+            formatBiasLabel(val) {
+                return val.toFixed(1) + ' °/s'
+            }
+        }
+    })
+
+    const app = Vue.createApp({
+        template: `
+            <UiSplitter :sizes="[65, 35]" direction="horizontal" :scroll="[false, true]">
+                <template #first>
+                    <UiSplitter :sizes="[58, 42]" direction="vertical" :scroll="[false, true]">
+                        <template #first>
+                            <UiRenderCanvas ref="renderCanvas" style="width: 100%; height: 100%; overflow: hidden;" />
+                            <div class="text-light" style="position: absolute; left: 1em; bottom: 1em;">
+                                Angle of relative orientation: <span class="angleLabel">{{ Math.round(diffAngle) }}</span>°
+                                (heading: <span class="angleLabel">{{ Math.round(headingAngle) }}</span>°,
+                                inclination: <span class="angleLabel">{{ Math.round(inclAngle) }}</span>°)
+                            </div>
+                            <UiButton
+                                variant="secondary" class="btn-sm" style="position: absolute; right: 1em; bottom: 1em;"
+                                @click="this.scene.rotate()"
+                            >
+                                <i class="bi bi-arrow-counterclockwise"></i>
+                            </UiButton>
+                        </template>
+                        <template #second>
+                            <OriEstABControlPanel :backend="backend" />
+                        </template>
+                    </UiSplitter>
+                </template>
+                <template #second>
+                    <InfoPanels :backend="backend" />
+                </template>
+            </UiSplitter>
+        `,
+        components: { OriEstABControlPanel, InfoPanels },
+        data() {
+            return {
+                backend: Vue.shallowRef(new Backend({defaultConfig: {cs: 'RFU'}})),
+                scene: Vue.shallowRef(null),
+                diffAngle: 0,
+                headingAngle: 0,
+                inclAngle: 0,
+            }
+        },
+        mounted() {
+            function vqfExtra(sample, debug, dummy) {
+                if (dummy) {
+                    return {
+                        norm: 0,
+                        magRefNorm: 0,
+                        magCandidateNorm: 0,
+                        dist: 0,
+                        dip: 0,
+                        magRefDip: 0,
+                        magCandidateDip: 0,
+                        magRejectT: 0,
+                        magCandidateT: 0,
+                        aboveMinGyr: 0,
+                        dist2: 0,
+                        normdev: 0,
+                        dipdev:0,
+                        accI: [0, 0, 0],
+                        lastAccLp: [0, 0, 0],
+                        sigma: 0,
+                        sigmaXYZ: [0, 0, 0],
+                        gyrdev: 0,
+                        accdev: 0,
+                        magdev: 0,
+                        rest: 0,
+                    }
+                }
+                const state = debug.state
+                const params = debug.params
+
+                const P = state.biasP
+                const sum1 = Math.abs(P[0]) + Math.abs(P[1]) + Math.abs(P[2])
+                const sum2 = Math.abs(P[3]) + Math.abs(P[4]) + Math.abs(P[5])
+                const sum3 = Math.abs(P[6]) + Math.abs(P[7]) + Math.abs(P[8])
+
+                return {
+                    // for mag dist rejection plots
+                    norm: state.magNormDip[0],
+                    magRefNorm: state.magRefNorm,
+                    magCandidateNorm: state.magCandidateNorm,
+                    dist: 90 * state.magDistDetected + 5,
+                    dip: state.magNormDip[1],
+                    magRefDip: state.magRefDip,
+                    magCandidateDip: state.magCandidateDip,
+                    magRejectT: state.magRejectT,
+                    magCandidateT: state.magCandidateT,
+                    aboveMinGyr: 10 * (rad2deg(vecNorm(state.restLastGyrLp)) > params.magNewMinGyr) + 40,
+                    dist2: 25 * state.magDistDetected,
+                    normdev: Math.abs(state.magNormDip[0] - state.magRefNorm) / (params.magNormTh * state.magRefNorm),
+                    dipdev: Math.abs(state.magNormDip[1] - state.magRefDip) / params.magDipTh, // TODO: rad/deg?
+
+                    // for filtered acc plot
+                    accI: new Quaternion(state.gyrQuat).rotate(sample.acc1),
+                    lastAccLp: state.lastAccLp,
+
+                    // for bias est plot
+                    sigma: Math.min(0.5, Math.sqrt(Math.max(sum1, sum2, sum3)) / 100.0),
+                    sigmaXYZ: [0, 4, 8].map(i => Math.sqrt(state.biasP[i]) / 100.0),
+
+                    // for rest detection plot
+                    gyrdev: Math.sqrt(state.restLastSquaredDeviations[0]) / deg2rad(params.restThGyr),
+                    accdev: Math.sqrt(state.restLastSquaredDeviations[1]) / params.restThAcc,
+                    magdev: Math.sqrt(state.restLastSquaredDeviations[2]) / vecNorm(state.restLastMagLp) / params.restThMag,
+                    rest: state.restDetected,
+                }
+            }
+            this.backend.addProcessingHook(function(sample) {
+                sample.zero = 0.0
+                sample.one = 1.0
+                sample.norm_berlin = 49.8
+                sample.dip_berlin = -67.92823 // https://www.ngdc.noaa.gov/geomag/calculators/magcalc.shtml#igrfwmm
+
+                sample.vqfA = vqfExtra(sample, sample.debugA, sample.algorithmA !== 'VQF')
+                sample.vqfB = vqfExtra(sample, sample.debugB, sample.algorithmB !== 'VQF')
+
+                return sample
+            })
+            this.backend.on('config', config => {
+                this.scene = new MainScene(this.$refs.renderCanvas, config.cs)
+                this.backend.on('sample', sample => this.scene.onSample(sample))
+            })
+            this.backend.on('sample', sample => {
+                const qDiff = new Quaternion(sample.quatA).multiply(new Quaternion(sample.quatB).conj())
+                this.diffAngle = Math.abs(rad2deg(wrapToPi(qDiff.angle())))
+
+                const p = qDiff.project([0, 0, 1])
+                this.headingAngle = Math.abs(rad2deg(wrapToPi(p[0])))
+                this.inclAngle = Math.abs(rad2deg(wrapToPi(p[1])))
+            })
+        },
+    })
+    app.use(UiPlugin)
+    const vm = app.mount('#app')
+    window.app = app
+    window.vm = vm
+</script>
+<body>
+<div id="app"></div>
+
+</body>
+</html>

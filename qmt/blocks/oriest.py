@@ -1,15 +1,82 @@
 # SPDX-FileCopyrightText: 2021 Daniel Laidig <laidig@control.tu-berlin.de>
 #
 # SPDX-License-Identifier: MIT
+import math
+
 import numpy as np
 
 import qmt
 
 
 def _calcAccMagDisAngle(quat, acc, mag):
-    accE = qmt.normalized(qmt.rotate(quat, acc))
-    magE = qmt.rotate(quat, mag)
-    return np.array([np.arccos(np.clip(accE[2], -1, 1)), np.abs(np.arctan2(magE[0], magE[1]))], float)
+    try:  # using math.cos and the VQF functions is a lot faster
+        from vqf import VQF
+        accE = VQF.quatRotate(quat, acc)
+        magE = VQF.quatRotate(quat, mag)
+        VQF.normalize(accE)
+        VQF.clip(accE, -1, 1)
+        return np.array([math.acos(accE[2]), abs(math.atan2(magE[0], magE[1]))], float)
+    except ImportError:
+        accE = qmt.normalized(qmt.rotate(quat, acc))
+        magE = qmt.rotate(quat, mag)
+        return np.array([np.arccos(np.clip(accE[2], -1, 1)), np.abs(np.arctan2(magE[0], magE[1]))], float)
+
+
+class OriEstVQFBlock(qmt.Block):
+    """
+    VQF orientation estimation algorithm.
+
+    See (TODO: link to publication) and https://github.com/dlaidig/vqf for more information about this algorithm.
+
+    This algorithm is also available as a function: :meth:`qmt.oriEstVQF`.
+    """
+    def __init__(self, Ts):
+        """
+        :param Ts: sampling time in seconds
+        """
+        super().__init__()
+        self.Ts = Ts
+        from vqf import VQF
+        self.obj = VQF(Ts)
+        self.params = self.obj.params
+
+    def command(self, command):
+        assert command == ['reset']
+        self.obj.resetState()
+
+    def setParams(self, params):
+        super().setParams(params)
+        for name, value in params.items():
+            if name == 'tauAcc':
+                self.obj.setTauAcc(value)
+            elif name == 'tauMag':
+                self.obj.setTauMag(value)
+            elif name == 'motionBiasEstEnabled':
+                self.obj.setMotionBiasEstEnabled(value)
+            elif name == 'restBiasEstEnabled':
+                self.obj.setRestBiasEstEnabled(value)
+            elif name == 'magDistRejectionEnabled':
+                self.obj.setMagDistRejectionEnabled(value)
+            elif name in ('restThGyr', 'restThAcc', 'restThMag'):
+                self.obj.setRestDetectionThresholds(self.params['restThGyr'], self.params['restThAcc'],
+                                                    self.params['restThMag'])
+            else:
+                print(f'ignored param {name}')
+
+    def step(self, gyr, acc, mag=None, debug=False):
+        self.obj.update(gyr, acc, mag)
+        quat = self.obj.getQuat6D() if mag is None else self.obj.getQuat9D()
+        if not debug:
+            return quat
+
+        debug = {}
+        state = self.obj.state
+        debug['bias'] = state['bias']
+        # note that state['lastAccDisAngle'] is different since it is based on the filtered acceleration
+        debug['disAngle'] = _calcAccMagDisAngle(quat, acc, mag)
+        debug['state'] = state
+        debug['params'] = self.obj.params
+        return quat, debug
 
 
 class OriEstMadgwickBlock(qmt.Block):
@@ -178,5 +245,5 @@ class OriEstIMUBlock(qmt.Block):
         quat, bias, error = self.obj.update(acc, gyr, mag)
         if not debug:
             return quat
-        debug = dict(bias=-bias, disAngle=error)
+        debug = dict(bias=-np.asarray(bias, float), disAngle=error)
         return quat, debug

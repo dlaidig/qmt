@@ -41,7 +41,7 @@ export default {
                 step: 0.1,
                 ticks: [-2, -1, 0, 1, 2],
                 labelWidth: '4.7em',
-                valueLabelWidth: '2em',
+                valueLabelWidth: '2.5em',
                 options: {
                     ticks_labels: [0.01, 0.1, 1, 10, 100],
                     formatter: val => round(Math.pow(10, val), 2),
@@ -54,7 +54,7 @@ export default {
                 step: 0.1,
                 ticks: [0, 1, 5, 10],
                 labelWidth: '4.7em',
-                valueLabelWidth: '2em',
+                valueLabelWidth: '2.5em',
                 options: {
                     ticks_labels: [0, 1, 5, 10],
                     ticks_positions: [0, 10, 50, 100],
@@ -67,7 +67,7 @@ export default {
                 step: 0.1,
                 ticks: [0, 1, 5],
                 labelWidth: '4.7em',
-                valueLabelWidth: '2em',
+                valueLabelWidth: '2.5em',
                 options: {
                     ticks_labels: [0, 1, 5],
                     ticks_positions: [0, 20, 100],

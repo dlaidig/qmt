@@ -18,6 +18,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Support for the [VQF orientation estimation algorithm](https://github.com/dlaidig/vqf) (`qmt.oriEstVQF`,
+  `qmt.oriEstBasicVQF`, `qmt.oriEstOfflineVQF`, `qmt.OriEstVQFBlock`.
+- Orientation estimation demo (`examples/orientation_estimation_demo.py`)
+- Simple magnetometer calibration function function `qmt.calibrateMagnetometerSimple`.
+- Lowpass filter block `qmt.LowpassFilterBlock`.
 ### Changed
 - Prefix all orientation estimation functions/blocks with `oriEst`/`OriEst` (`qmt.oriEstMadgwick`, `qmt.oriEstMahony`,
  `qmt.OriEstMadgwickBlock`, `qmt.OriEstMahonyBlock`).
