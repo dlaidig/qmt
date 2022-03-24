@@ -88,7 +88,7 @@ v2 = quaternionRotate(q2,j_b2);
 
 weight = getWeight(q1,q2,j_b1,j_b2);
 
-error = (wrapToPi(atan2(v2(:,2), v2(:,1)) - atan2(v1(:,2), v1(:,1))) + delta).*weight;
+error = wrapToPi(atan2(v2(:,2), v2(:,1)) - atan2(v1(:,2), v1(:,1)) + delta).*weight;
 jac = weight;
 end
 
@@ -109,7 +109,7 @@ q_b2_b1 = quaternionMultiply(q_s2_b1,q_b2_s2);
 arcsin_arg = 2*(q_b2_b1(:,2).*q_b2_b1(:,1) + q_b2_b1(:,3) .* q_b2_b1(:,4));
 second_angle = asin(clip(arcsin_arg,-1,1));
 
-error = (second_angle); 
+error = (second_angle);
 
 % Jacobian
 q_b2_e2 = quaternionMultiply(q2,q_b2_s2);
@@ -143,4 +143,3 @@ v1 = quaternionRotate(q1,j_b1);
 v2 = quaternionRotate(q2,j_b2);
 weight = sqrt(v1(:,1).^2 + v1(:,2).^2) .* sqrt(v2(:,1).^2 + v2(:,2).^2);
 end
- 

@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the sign was wrong) and in `qmt.oriEstIMU` (the sign was wrong).
 - The `filename` parameter of `qmt.setupDebugPlots` now accepts `pathlib.Path` objects in addition to strings.
 - Setting values for the `constraint` parameter of `qmt.headingCorrection` is now possible.
+- Fixed angle wrapping issue in the `1d_corr` constraint of the `qmt.headingCorrection` function.
 
 ## [0.1.0] - 2021-12-01
 ### Added

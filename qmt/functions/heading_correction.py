@@ -604,7 +604,7 @@ def getErrorAndJac1dCorr(delta, q1, q2, jB1, jB2):
 
     weight = getWeight(q1, q2, jB1, jB2)
 
-    error = (qmt.wrapToPi(np.arctan2(v2[:, 1], v2[:, 0]) - np.arctan2(v1[:, 1], v1[:, 0])) + delta) * weight
+    error = qmt.wrapToPi(np.arctan2(v2[:, 1], v2[:, 0]) - np.arctan2(v1[:, 1], v1[:, 0]) + delta) * weight
     jac = weight
     return error, jac
 
