@@ -103,9 +103,12 @@ def headingCorrection(gyr1, gyr2, quat1, quat2, t, joint, jointInfo, estSettings
         deltaRange=np.deg2rad(np.linspace(0, 359, 360)),
         angleRanges=np.ones((3, 1)) * np.array([[-np.pi, np.pi]]),
         convention='xyz',
+        constraint=None,
     )
 
     estSettings = setDefaults(estSettings, defaults)
+    if estSettings['constraint'] is None:
+        del estSettings['constraint']  # default values are later handled depending on DoF
 
     useRomConstraints = estSettings['useRomConstraints']
     windowTime = estSettings['windowTime']
