@@ -61,7 +61,7 @@ setup(
 
     install_requires=['numpy', 'scipy', 'matplotlib', 'PyYAML',
                       'transplant>=0.8.11',  # 0.8.11 fixes https://github.com/bastibe/transplant/issues/81
-                      'aiohttp>=3.8.1', 'ipython', 'notebook', 'aiofiles', 'orjson', 'qasync'],
+                      'aiohttp>=3.8.1', 'aiofiles', 'orjson', 'qasync'],
     extras_require={
         # pip3 install --user -e ".[dev]"
         'dev': ['PySide2', 'pytest', 'pytest-flake8', 'flake8<4',  # https://github.com/tholo/pytest-flake8/issues/81
