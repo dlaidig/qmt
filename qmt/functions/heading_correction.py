@@ -228,7 +228,7 @@ def headingCorrection(gyr1, gyr2, quat1, quat2, t, joint, jointInfo, estSettings
                 stillness = checkStillness(gyr1[index - stillnessSteps:index + 1, :],
                                            gyr2[index - stillnessSteps:index + 1, :], stillnessThreshold)
                 if stillness:
-                    if state == 'regular':
+                    if stateOut[k-1] == 1:  # regular
                         stillnessTrigger = True
                     state = 'stillness'
                 else:
@@ -314,7 +314,8 @@ def headingCorrection(gyr1, gyr2, quat1, quat2, t, joint, jointInfo, estSettings
     # the filter only extrapolates the estimated slope and dismisses new estimates until rating >= rating_min
 
     # shape(Nx1) for delta, rating tauDelta, tauBias inputs
-    deltaFilt, bias = headingFilter(delta, rating, estimationRate, tauDelta, tauBias, ratingMin, windowTime, alignment)
+    deltaFilt, bias = headingFilter(delta, rating, stateOut, estimationRate, tauDelta, tauBias, ratingMin, windowTime,
+                                    alignment)
 
     if debug or plot:
         # uninterpolated debug data
@@ -447,7 +448,7 @@ class stillnessCorrection:
         return delta
 
 
-def headingFilter(delta, rating, estimationRate, tauBias, tauDelta, minRating, windowTime, alignment):
+def headingFilter(delta, rating, state, estimationRate, tauBias, tauDelta, minRating, windowTime, alignment):
     # based on Matlab implementation in matlab/lib/HeadingCorrection/heading_corection.m
 
     N = delta.shape[0]
@@ -468,22 +469,30 @@ def headingFilter(delta, rating, estimationRate, tauBias, tauDelta, minRating, w
     if isinstance(tauBias, (int, float)):
         kBias = np.ones((N, 1)) * kBias
 
+    rating = rating.copy()
     rating[rating < minRating] = 0
     out[0, :] = delta[0, :]
 
     biasClip = np.deg2rad(2) * Ts  # limit bias estimate to 2°/s
-
+    j = 0
     for i in range(1, N):
-        bias[i, :] = np.clip(
-            bias[i - 1, :] + rating[i, :] * max(kBias[i, :], 1 / (i + 1))
-            * (qmt.wrapToPi(delta[i, :] - delta[i - 1, :]) - bias[i - 1, :]), -biasClip, biasClip)
-        out[i, :] = out[i - 1, :] + bias[i, :] + rating[i, :] * max(kDelta[i, :], 1 / (i + 1)) * (
-            qmt.wrapToPi(delta[i, :] - out[i - 1, :]) - bias[i, :])
-    # if alignment == 'backward':
-    #     delta_out = out + windowSize / 2 * bias
-    # else:  # center
-    #     return out, bias
-    delta_out = out + windowSize / 2 * bias
+        if state[i] == 2:  # startup
+            kBiasEff = 0.0
+            kDeltaEff = max(rating[i, :] * kDelta[i, :], 1 / (i + 1))
+        else:
+            kBiasEff = rating[i, :] * kBias[i, :]
+            kDeltaEff = max(rating[i, :] * kDelta[i, :], 1 / (j + 1))
+            j += 1
+
+        deltaDiff = np.clip(qmt.wrapToPi(delta[i, :] - delta[i - 1, :]), -biasClip, biasClip)
+        bias[i, :] = np.clip(bias[i - 1, :] + kBiasEff * (deltaDiff - bias[i - 1, :]), -biasClip, biasClip)
+        out[i, :] = out[i - 1, :] + bias[i, :] + kDeltaEff * (qmt.wrapToPi(delta[i, :] - out[i - 1, :]) - bias[i, :])
+    if alignment == 'backward':
+        delta_out = out + windowSize / 2 * bias
+    elif alignment == 'forward':
+        delta_out = out - windowSize / 2 * bias
+    else:  # center
+        delta_out = out
 
     return delta_out, bias
 

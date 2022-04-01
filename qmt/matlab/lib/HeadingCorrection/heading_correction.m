@@ -279,7 +279,7 @@ function [quat2_corr,delta,delta_filt,rating,state_out, debug_data] = heading_co
             if(index>stillness_steps)
                 stillness = check_stillness(data1.gyr(index-stillness_steps:index,:),data2.gyr(index-stillness_steps:index,:),stillness_threshold);
                 if(stillness)
-                    if(strcmp(state,'regular'))
+                    if(state_out(k-1) == 1)  % regular
                         stillness_trigger = true;
                     end
                     state = 'stillness';
@@ -373,7 +373,7 @@ function [quat2_corr,delta,delta_filt,rating,state_out, debug_data] = heading_co
     % use a filter to smooth the trajectory of the estimated delta. The filter tries to eliminate phase lag introduced by low pass filtering by estimating the slope of the current trajectory. Furthermore, if
     % rating < rating_min, the filter only extrapolates the estimated slope and
     % dismisses new estimates until rating >= rating_min
-    [delta_filt, bias]  = headingFilter(delta,rating,estimation_rate,tau_delta,tau_bias,rating_min,window_time);
+    [delta_filt, bias]  = headingFilter(delta,rating,state_out,estimation_rate,tau_delta,tau_bias,rating_min,window_time,alignment);
 
     if debug
         debug_data.uninterpolated.delta = delta;
@@ -460,7 +460,7 @@ delta = delta_still+ delta_inc;
 end
 
 %% headingFilter
-function [delta_out, bias] = headingFilter(delta, rating, estimation_rate,tau_bias,tau_delta,minRating,window_time)
+function [delta_out, bias] = headingFilter(delta, rating, state, estimation_rate,tau_bias,tau_delta,minRating,window_time, alignment)
 
 % tau_bias = 8; % tuning parameter: time constant for bias filter %15
 % tau_delta = 15; % tuning parameter: time constant for heading filter %30
@@ -489,9 +489,27 @@ out(1) = delta(1);
 
 biasClip = deg2rad(2) * Ts;
 
+j = 0;
 for i=2:N
-    bias(i) = clip(bias(i-1) + rating(i) * max(k_bias(i), 1/i) * (wrapToPi(delta(i) - delta(i-1)) - bias(i-1)), -biasClip, biasClip);
-    out(i) = out(i-1) + bias(i) + rating(i) * max(k_delta(i), 1/i) * (wrapToPi(delta(i) - out(i-1)) - bias(i));
-    delta_out(i) = out(i) + window_size/2 * bias(i);
+    if(state(i) == 2)  % startup
+        kBiasEff = 0.0;
+        kDeltaEff = max(rating(i) * k_delta(i), 1 / i);
+    else
+        kBiasEff = rating(i) * k_bias(i);
+        kDeltaEff = max(rating(i) * k_delta(i), 1 / (j + 1));
+        j = j + 1;
+    end
+
+    deltaDiff = clip(wrapToPi(delta(i) - delta(i-1)), -biasClip, biasClip);
+    bias(i) = clip(bias(i-1) + kBiasEff * (deltaDiff - bias(i-1)), -biasClip, biasClip);
+    out(i) = out(i-1) + bias(i) + kDeltaEff * (wrapToPi(delta(i) - out(i-1)) - bias(i));
+
+    if strcmp(alignment, 'backward')
+        delta_out(i) = out(i) + window_size/2 * bias(i);
+    elseif strcmp(alignment, 'forward')
+        delta_out(i) = out(i) - window_size/2 * bias(i);
+    else  % center
+        delta_out(i) = out(i);
+    end
 end
 end

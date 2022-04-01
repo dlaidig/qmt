@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Prefix all orientation estimation functions/blocks with `oriEst`/`OriEst` (`qmt.oriEstMadgwick`, `qmt.oriEstMahony`,
  `qmt.OriEstMadgwickBlock`, `qmt.OriEstMahonyBlock`).
 - The `ipython` and `notebook` packages are no longer listed as dependencies.
+- Improved heading filter behavior and stillness detection in `qmt.headingCorrection`.
 ### Fixed
 - Output correct gyroscope bias estimate in `qmt.oriEstMahony` (the previous estimate was wrongly scaled by Ki and
   the sign was wrong) and in `qmt.oriEstIMU` (the sign was wrong).
