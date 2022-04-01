@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Orientation estimation demo (`examples/orientation_estimation_demo.py`).
 - Simple magnetometer calibration function function `qmt.calibrateMagnetometerSimple`.
 - Lowpass filter block `qmt.LowpassFilterBlock`.
+- Utility function `qmt.parallel` for simple multiprocessing-based parallel data processing.
 ### Changed
 - Prefix all orientation estimation functions/blocks with `oriEst`/`OriEst` (`qmt.oriEstMadgwick`, `qmt.oriEstMahony`,
  `qmt.OriEstMadgwickBlock`, `qmt.OriEstMahonyBlock`).

@@ -9,7 +9,7 @@ from .utils.webapp import Webapp
 from .utils.webapp_process import WebappProcessConnection
 from .utils.datasource import AbstractDataSource, ProcessDataSource, ProcessDataSourceConnection, ClockDataSource
 from .utils.datasource import PlaybackDataSource, DummyImuDataSource, dataSourceFromJson
-from .utils.misc import toJson, setDefaults, startStopInd
+from .utils.misc import toJson, setDefaults, startStopInd, parallel
 
 from .functions.quaternion import qmult, qmult_debugPlot
 from .functions.quaternion import qinv, qinv_debugPlot

@@ -48,6 +48,7 @@ Python utilities
 **Other utilities**
 
 .. autosummary::
+    qmt.parallel
     qmt.setDefaults
     qmt.startStopInd
 
@@ -117,6 +118,8 @@ Data synchronization
 
 Other utilities
 ===============
+
+.. autofunction:: qmt.parallel
 
 .. autofunction:: qmt.setDefaults
 
