@@ -25,7 +25,7 @@ def oriEstVQF(gyr, acc, mag=None, params=None, debug=False, plot=False):
     """
     VQF orientation estimation algorithm.
 
-    See (TODO: link to publication) and https://github.com/dlaidig/vqf for more information about this algorithm.
+    See https://arxiv.org/abs/2203.17024 and https://github.com/dlaidig/vqf for more information about this algorithm.
 
     If potential real-time capability is not needed, use the offline version :meth:`qmt.oriEstOfflineVQF` for improved
     accuray. This algorithm is also available as an online data processing block: :class:`qmt.OriEstVQFBlock`.
@@ -113,7 +113,7 @@ def oriEstBasicVQF(gyr, acc, mag=None, params=None, debug=False, plot=False):
     Basic version of the VQF orientation estimation algorithm (no rest detection, no gyroscope bias estimation, no
     magnetic disturbance rejection).
 
-    See (TODO: link to publication) and https://github.com/dlaidig/vqf for more information about this algorithm.
+    See https://arxiv.org/abs/2203.17024 and https://github.com/dlaidig/vqf for more information about this algorithm.
 
     :param gyr: Nx3 array with gyroscope measurements [rad/s]
     :param acc: Nx3 array with accelerometer measurements [m/s^2]
@@ -186,7 +186,7 @@ def oriEstOfflineVQF(gyr, acc, mag=None, params=None, debug=False, plot=False):
     """
     Offline version of the VQF orientation estimation algorithm.
 
-    See (TODO: link to publication) and https://github.com/dlaidig/vqf for more information about this algorithm.
+    See https://arxiv.org/abs/2203.17024 and https://github.com/dlaidig/vqf for more information about this algorithm.
 
     :param gyr: Nx3 array with gyroscope measurements [rad/s]
     :param acc: Nx3 array with accelerometer measurements [m/s^2]

@@ -26,7 +26,7 @@ class OriEstVQFBlock(qmt.Block):
     """
     VQF orientation estimation algorithm.
 
-    See (TODO: link to publication) and https://github.com/dlaidig/vqf for more information about this algorithm.
+    See https://arxiv.org/abs/2203.17024 and https://github.com/dlaidig/vqf for more information about this algorithm.
 
     This algorithm is also available as a function: :meth:`qmt.oriEstVQF`.
     """
