@@ -22,10 +22,9 @@ The qmt Python package can easily be installed from `PyPI <https://pypi.org/proj
 
 Depending on your Python installation, it might be necessary to use ``pip3`` instead of ``pip`` and/or to add the
 ``--user`` option.
-To also install the `PySide2 <https://pypi.org/project/PySide2/>`_ package that is needed to run webapps in a custom
-window, use the extra ``gui`` specifier: ``pip install "qmt[gui]"``. If installing PySide2 via PyPI is not supported for
-your architecture, you can either find other ways to install it (e.g.,
-`brew <https://formulae.brew.sh/formula/pyside@2>`_) or use the Chromium browser window fallback.
+To run webapps, install either `PySide6 <https://pypi.org/project/PySide6/>`_ or
+`PySide2 <https://pypi.org/project/PySide2/>`_. If neither PySide6 nor PySide2 work on your system, webapps can still be
+displayed with a Chromium browser window fallback.
 
 To install the toolbox from `the source code hosted on GitHub <https://github.com/dlaidig/qmt>`_, the JavaScript library
 for the webapps needs to be built first. It is also recommended to install the optional ``dev`` dependencies. In the

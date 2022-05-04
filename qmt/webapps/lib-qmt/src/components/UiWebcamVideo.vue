@@ -18,7 +18,7 @@ export default {
                 .catch(error => console.warn('error accessing webcam', error))
         } else {
             console.warn('navigator.mediaDevices.getUserMedia not available, cannot show webcam video ' +
-                '(webcam access is not yet possible in the PySide2-based viewer, use chromium instead.)')
+                '(webcam access is not yet possible in the PySide-based viewer, use chromium instead.)')
         }
     },
     beforeUnmount() {

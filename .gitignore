@@ -7,6 +7,7 @@ __pycache__
 .ipynb_checkpoints/
 CMakeLists.txt.user
 /.idea/
+.DS_Store
 
 /*.egg-info/
 /build/

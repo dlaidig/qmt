@@ -637,10 +637,10 @@ class Webapp:
     @staticmethod
     def initialize():
         """
-        Initialize the PySide2 viewer.
+        Initialize the PySide viewer.
 
         This function is automatically called when a webapp is started. However, the initialization has to happen before
-        a QApplication instance is created. In a custom PySide2 application or when other code creates a QApplication
+        a QApplication instance is created. In a custom PySide application or when other code creates a QApplication
         (e.g., matplotlib with the Qt5Agg backend), it is necessary to call ``qmt.Webapp.initialize()`` before this
         happens.
         """
@@ -656,18 +656,18 @@ class Webapp:
             try:
                 if 'PyQt5' in sys.modules:
                     logger.warning('The PyQt5 module is already loaded, which might not work in combination with the '
-                                   'PySide2-based viewer. This might be caused by importing matplotlib with the Qt5Agg '
+                                   'PySide-based viewer. This might be caused by importing matplotlib with the Qt5Agg '
                                    'backend. To mitigate this, either call ``qmt.Webapp.initialize()`` early enough, '
-                                   'set the environment variable QT_API to PySide2, or import PySide2.QtCore early in '
-                                   'your application. If this does not work, use the Chromium-based viewer by setting '
-                                   'Webapp.show to "chromium" or setting the  QMT_CHROMIUM_FALLBACK environment '
-                                   'variable to 1.')
+                                   'set the environment variable QT_API to PySide2/6, or import PySide2/6.QtCore early '
+                                   'in your application. If this does not work, use the Chromium-based viewer by '
+                                   'setting  Webapp.show to "chromium" or setting the  QMT_CHROMIUM_FALLBACK '
+                                   'environment variable to 1.')
                 from qmt.utils.webapp_pyside import PysideWebappViewer
                 return PysideWebappViewer(self)
             except ImportError as e:
-                if e.name != 'PySide2':
+                if e.name not in ('PySide2', 'PySide6'):
                     raise
-                logging.warning(f'PySide2 not available: "{e}" - using the "chromium" fallback')
+                logging.warning(f'PySide not available: "{e}" - using the "chromium" fallback')
                 self.show = 'chromium'
 
         from qmt.utils.webapp_aiohttp import AiohttpWebappViewer

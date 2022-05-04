@@ -264,7 +264,7 @@ def runExample(f):
 
 
 if __name__ == '__main__':
-    # Note: If PySide2 has already been used in the main process (e.g., by running a Webapp or by creating plots with
+    # Note: If PySide has already been used in the main process (e.g., by running a Webapp or by creating plots with
     # matplotlib and the Qt5Agg backend), the `spawn` method has to be selected before calling runInProcess().
     # With the `fork` method, the child process will inherit the singleton QApplication instance from the main process.
     multiprocessing.set_start_method('spawn')

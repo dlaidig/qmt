@@ -6,16 +6,32 @@ import asyncio
 import json
 import logging
 import os
+import sys
 
-from PySide2 import QtCore
-from PySide2 import QtGui
-from PySide2 import QtWidgets
-from PySide2 import QtWebEngine
-from PySide2 import QtWebEngineWidgets
-from PySide2 import QtWebEngineCore
-from PySide2 import QtWebChannel
+try:
+    if 'PySide2' in sys.modules or os.environ.get('QT_API') == 'PySide2':
+        raise ImportError()  # do not try to import PySide6
+    from PySide6 import QtWebEngineWidgets
+    from PySide6 import QtCore
+    from PySide6 import QtGui
+    from PySide6 import QtWidgets
+    from PySide6.QtWebEngineQuick import QtWebEngineQuick as QtWebEngine
+    from PySide6 import QtWebEngineCore
+    from PySide6 import QtWebChannel
+    from PySide6.QtWebEngineCore import QWebEnginePage, QWebEngineProfile, QWebEngineSettings
+    from PySide6.QtGui import QAction
+except ImportError:
+    from PySide2 import QtWebEngineWidgets
+    from PySide2 import QtCore
+    from PySide2 import QtGui
+    from PySide2 import QtWidgets
+    from PySide2.QtWebEngine import QtWebEngine
+    from PySide2 import QtWebEngineCore
+    from PySide2 import QtWebChannel
+    from PySide2.QtWebEngineWidgets import QWebEnginePage, QWebEngineProfile, QWebEngineSettings
+    from PySide2.QtWidgets import QAction
+
 import qasync
-
 from qmt.utils.misc import toJson
 from qmt.utils.webapp import AbstractWebappViewer
 
@@ -179,14 +195,14 @@ class JsLogger(logging.Logger):
         return record
 
 
-class Page(QtWebEngineWidgets.QWebEnginePage):
+class Page(QWebEnginePage):
     """
     Custom QWebEnginePage that intercepts JavaScript log messages and sends them to the Python logging module.
     """
     LEVELS = {
-        QtWebEngineWidgets.QWebEnginePage.InfoMessageLevel: logging.INFO,
-        QtWebEngineWidgets.QWebEnginePage.WarningMessageLevel: logging.WARNING,
-        QtWebEngineWidgets.QWebEnginePage.ErrorMessageLevel: logging.ERROR,
+        QWebEnginePage.InfoMessageLevel: logging.INFO,
+        QWebEnginePage.WarningMessageLevel: logging.WARNING,
+        QWebEnginePage.ErrorMessageLevel: logging.ERROR,
     }
     LEVEL_CONFIG = {
         'info': logging.INFO,
@@ -226,18 +242,18 @@ class WebappWindow(QtWebEngineWidgets.QWebEngineView):
 
         self.setWindowIcon(QtGui.QIcon(os.path.join(webapp.baseDir, 'lib-qmt/favicon.png')))
 
-        self.fullScreenAction = QtWidgets.QAction('Full Screen', self)
+        self.fullScreenAction = QAction('Full Screen', self)
         self.fullScreenAction.setCheckable(True)
         self.fullScreenAction.setShortcut(QtGui.QKeySequence('F11'))
         self.fullScreenAction.toggled.connect(self.onFullScreenToggled)
         self.addAction(self.fullScreenAction)
 
-        self.resetZoomAction = QtWidgets.QAction('Reset Zoom', self)
+        self.resetZoomAction = QAction('Reset Zoom', self)
         self.resetZoomAction.setShortcut(QtGui.QKeySequence('Ctrl+0'))
         self.resetZoomAction.triggered.connect(lambda: self.page.setZoomFactor(1.0))
         self.addAction(self.resetZoomAction)
 
-        self.profile = QtWebEngineWidgets.QWebEngineProfile(self)
+        self.profile = QWebEngineProfile(self)
         self.interceptor = Interceptor(self)
         self.profile.setUrlRequestInterceptor(self.interceptor)
         self.page = Page(self.profile, self, webapp.jsLogLevel, [webapp.baseDir, webapp.dirname])
@@ -250,7 +266,7 @@ class WebappWindow(QtWebEngineWidgets.QWebEngineView):
         self.profile.installUrlSchemeHandler(QtCore.QByteArray(b'qmt'), self.handler)
 
         # this works with http:// but not with qrc://, use web channel instead
-        self.page.settings().setAttribute(QtWebEngineWidgets.QWebEngineSettings.JavascriptCanAccessClipboard, True)
+        self.page.settings().setAttribute(QWebEngineSettings.JavascriptCanAccessClipboard, True)
 
         self.titleChanged.connect(lambda title: self.setWindowTitle(title))
 
@@ -280,7 +296,10 @@ class WebappWindow(QtWebEngineWidgets.QWebEngineView):
         self._closeEvent.set()
 
     def contextMenuEvent(self, event):
-        menu = self.page.createStandardContextMenu()
+        try:  # Qt5
+            menu = self.page.createStandardContextMenu()
+        except AttributeError:  # Qt 6
+            menu = self.createStandardContextMenu()
         menu.addAction(self.resetZoomAction)
         menu.addAction(self.fullScreenAction)
         menu.popup(event.globalPos())
@@ -315,7 +334,7 @@ class PysideWebappViewer(AbstractWebappViewer):
                            'with the PySide2 webapp viewer. This may, for example, be caused by creating matplotlib '
                            'plots with the Qt5Agg backend. Please call "qmt.Webapp.initialize()" early in your '
                            'application.')
-        QtWebEngine.QtWebEngine.initialize()
+        QtWebEngine.initialize()
         QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
         scheme = QtWebEngineCore.QWebEngineUrlScheme(b'qmt')
         scheme.setFlags(QtWebEngineCore.QWebEngineUrlScheme.SecureScheme)
