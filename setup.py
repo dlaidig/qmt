@@ -35,7 +35,7 @@ for m in ext_modules:
 
 setup(
     name='qmt',
-    version='0.2.0',
+    version='0.2.1',
 
     description='Quaternion-based Inertial Motion Tracking Toolbox',
     long_description=open('README.rst', encoding='utf-8').read(),
