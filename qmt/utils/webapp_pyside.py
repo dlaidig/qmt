@@ -240,7 +240,9 @@ class WebappWindow(QtWebEngineWidgets.QWebEngineView):
         logger.setLevel(webapp.logLevel)
         self._closeEvent = closeEvent
 
-        self.setWindowIcon(QtGui.QIcon(os.path.join(webapp.baseDir, 'lib-qmt/favicon.png')))
+        icon = QtGui.QIcon(os.path.join(webapp.baseDir, 'lib-qmt/favicon.png'))
+        self.setWindowIcon(icon)
+        QtWidgets.QApplication.instance().setWindowIcon(icon)
 
         self.fullScreenAction = QAction('Full Screen', self)
         self.fullScreenAction.setCheckable(True)
