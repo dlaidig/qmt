@@ -662,15 +662,15 @@ SPDX-License-Identifier: MIT
                     magRefNorm: state.magRefNorm,
                     magCandidateNorm: state.magCandidateNorm,
                     dist: 90 * state.magDistDetected + 5,
-                    dip: state.magNormDip[1],
-                    magRefDip: state.magRefDip,
-                    magCandidateDip: state.magCandidateDip,
+                    dip: rad2deg(state.magNormDip[1]),
+                    magRefDip: rad2deg(state.magRefDip),
+                    magCandidateDip: rad2deg(state.magCandidateDip),
                     magRejectT: state.magRejectT,
                     magCandidateT: state.magCandidateT,
                     aboveMinGyr: 10 * (rad2deg(vecNorm(state.restLastGyrLp)) > params.magNewMinGyr) + 40,
                     dist2: 25 * state.magDistDetected,
                     normdev: Math.abs(state.magNormDip[0] - state.magRefNorm) / (params.magNormTh * state.magRefNorm),
-                    dipdev: Math.abs(state.magNormDip[1] - state.magRefDip) / params.magDipTh, // TODO: rad/deg?
+                    dipdev: rad2deg(Math.abs(state.magNormDip[1] - state.magRefDip)) / params.magDipTh,
 
                     // for filtered acc plot
                     accI: new Quaternion(state.gyrQuat).rotate(sample.acc1),
