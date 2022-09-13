@@ -36,7 +36,7 @@ module.exports = function qmt(options) {
                 config.server = {
                     proxy: {
                         '^/lib-qmt/.*': {
-                            target: 'http://localhost:3000/@fs' + path.resolve(__dirname, '..'),
+                            target: 'http://127.0.0.1:3000/@fs' + path.resolve(__dirname, '..'),
                             changeOrigin: true,
                         }
                     },
