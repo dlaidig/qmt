@@ -148,7 +148,7 @@ SPDX-License-Identifier: MIT
 
     const OriEstControlPanel = Vue.defineComponent({
         template: `
-            <UiPanel title="IMU A" :collapsible="false">
+            <UiPanel :title="'IMU ' + imu" :collapsible="false">
                 <template #header>
                     <UiDropdown
                         v-model="algorithm" :options="algorithms" class="form-select-sm float-end"
