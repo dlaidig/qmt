@@ -18,6 +18,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Support for zooming in and out via the context menu of the webapp viewer.
 
 ## [0.2.1] - 2022-05-09
 ### Changed

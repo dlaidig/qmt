@@ -250,6 +250,16 @@ class WebappWindow(QtWebEngineWidgets.QWebEngineView):
         self.fullScreenAction.toggled.connect(self.onFullScreenToggled)
         self.addAction(self.fullScreenAction)
 
+        self.zoomInAction = QAction('Zoom In', self)
+        self.zoomInAction.setShortcut(QtGui.QKeySequence('Ctrl+Plus'))
+        self.zoomInAction.triggered.connect(lambda: self.page.setZoomFactor(self.page.zoomFactor() + 0.1))
+        self.addAction(self.zoomInAction)
+
+        self.zoomOutAction = QAction('Zoom Out', self)
+        self.zoomOutAction.setShortcut(QtGui.QKeySequence('Ctrl+Minus'))
+        self.zoomOutAction.triggered.connect(lambda: self.page.setZoomFactor(self.page.zoomFactor() - 0.1))
+        self.addAction(self.zoomOutAction)
+
         self.resetZoomAction = QAction('Reset Zoom', self)
         self.resetZoomAction.setShortcut(QtGui.QKeySequence('Ctrl+0'))
         self.resetZoomAction.triggered.connect(lambda: self.page.setZoomFactor(1.0))
@@ -302,6 +312,8 @@ class WebappWindow(QtWebEngineWidgets.QWebEngineView):
             menu = self.page.createStandardContextMenu()
         except AttributeError:  # Qt 6
             menu = self.createStandardContextMenu()
+        menu.addAction(self.zoomInAction)
+        menu.addAction(self.zoomOutAction)
         menu.addAction(self.resetZoomAction)
         menu.addAction(self.fullScreenAction)
         menu.popup(event.globalPos())
