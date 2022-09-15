@@ -1583,7 +1583,7 @@ def headingInclinationAngle(quat, debug=False, plot=False):
     assert quat.shape[-1] == 4
 
     heading = wrapToPi(2 * np.arctan2(quat[..., 3], quat[..., 0]))
-    inclination = 2 * np.arccos(np.clip(np.sqrt(quat[:, 3] ** 2 + quat[:, 0] ** 2), -1, 1))
+    inclination = 2 * np.arccos(np.clip(np.sqrt(quat[..., 3] ** 2 + quat[..., 0] ** 2), -1, 1))
 
     if debug or plot:
         debugData = dict(
