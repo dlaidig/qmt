@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Support for zooming in and out via the context menu of the webapp viewer.
+## Changed
+- Updated JavaScript dependencies of webapp library.
 ### Fixed
 - Fixed array broadcasting in `qmt.headingInclinationAngle`.
 

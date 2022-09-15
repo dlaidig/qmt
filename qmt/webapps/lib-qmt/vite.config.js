@@ -10,8 +10,6 @@ export default defineConfig({
     plugins: [vue()],
     build: {
         sourcemap: true,
-        // note that minify will not work with vite 2.6, cf. https://github.com/vitejs/vite/issues/5167
-        // minify: false, // temporary
         lib: {
             entry: path.resolve(__dirname, 'src/index.js'),
             formats: ['es'],
@@ -35,5 +33,11 @@ export default defineConfig({
             'jquery': path.resolve(__dirname, 'src/jquery-stub.cjs'),
             'vue': 'vue/dist/vue.esm-bundler.js',
         },
+    },
+    // note that minify will not work with vite 2.6, cf. https://github.com/vitejs/vite/issues/5167 and
+    // https://github.com/vitejs/vite/issues/6555
+    // this works: https://github.com/vuejs/petite-vue/pull/112
+    esbuild: {
+        minify: true,
     },
 })
