@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Support for zooming in and out via the context menu of the webapp viewer.
+- Support for passing arbitrary options to the IMU boxes of a BoxModel via the `imubox_options` property.
 ## Changed
 - Updated JavaScript dependencies of webapp library.
 ### Fixed

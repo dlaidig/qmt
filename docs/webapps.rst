@@ -104,6 +104,7 @@ are used.
 * ``imubox_distance_rel``: Distance of the IMU box from the segment box center (relative to segment dimensions),
   default: 1.05.
 * ``imubox_distance_abs``: Distance of the IMU box from the segment box center (absolute), default: 1.
+* ``imubox_options``: Arbitrary extra options (e.g., texture) that are passed to the IMU boxes.
 
 The following example configuration defines a kinematic chain with 2 segments, consisting of forearm and hand::
 

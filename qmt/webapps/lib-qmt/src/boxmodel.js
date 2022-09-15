@@ -441,7 +441,7 @@ class BoxModelSegment {
         // create IMU box
         if (this.options.imubox_show && this.options.q_segment2sensor) {
             const cs = this.options.imubox_cs
-            const imuOpts = {cs, scale: this.options.scale * this.options.imubox_scale, led: false, axes: true}
+            const imuOpts = {cs, scale: this.options.scale * this.options.imubox_scale, led: false, axes: true, ...this.options.imubox_options}
             this.imu = new IMUBox(this.scene, imuOpts)
             this.imu.box.parent = this.box
 

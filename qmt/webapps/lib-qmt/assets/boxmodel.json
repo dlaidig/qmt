@@ -26,7 +26,8 @@
       "imubox_scale": 0.6,
       "imubox_cs": "RFU",
       "imubox_distance_rel": 1.05,
-      "imubox_distance_abs": 1
+      "imubox_distance_abs": 1,
+      "imubox_options": {}
     },
     "segments": {}
   },
