@@ -362,15 +362,15 @@ def _check_keys(d):
     todict is called to change them to nested dictionaries
     """
     for key in d:
-        if isinstance(d[key], spio.matlab.mio5_params.mat_struct):
+        if isinstance(d[key], spio.matlab.mat_struct):
             d[key] = _todict(d[key])
         # for use with flatten=False
         elif isinstance(d[key], np.ndarray) and d[key].shape == (1, 1) and \
-                isinstance(d[key][0, 0], spio.matlab.mio5_params.mat_struct):
+                isinstance(d[key][0, 0], spio.matlab.mat_struct):
             d[key] = _todict(d[key][0, 0])
         # for cell arrays of structs
         elif isinstance(d[key], np.ndarray) and len(d[key].shape) == 1 and d[key].dtype == object and \
-                isinstance(d[key][0], spio.matlab.mio5_params.mat_struct):
+                isinstance(d[key][0], spio.matlab.mat_struct):
             d[key] = [_todict(e) for e in d[key]]
     return d
 
@@ -382,15 +382,15 @@ def _todict(matobj):
     d = {}
     for strg in matobj._fieldnames:
         elem = matobj.__dict__[strg]
-        if isinstance(elem, spio.matlab.mio5_params.mat_struct):
+        if isinstance(elem, spio.matlab.mat_struct):
             d[strg] = _todict(elem)
         # for use with flatten=False
         elif isinstance(elem, np.ndarray) and elem.shape == (1, 1) and \
-                isinstance(elem[0, 0], spio.matlab.mio5_params.mat_struct):
+                isinstance(elem[0, 0], spio.matlab.mat_struct):
             d[strg] = _todict(elem[0, 0])
         # for cell arrays of structs
         elif isinstance(elem, np.ndarray) and len(elem.shape) == 1 and elem.dtype == object and \
-                isinstance(elem[0], spio.matlab.mio5_params.mat_struct):
+                isinstance(elem[0], spio.matlab.mat_struct):
             d[strg] = [_todict(e) for e in elem]
         else:
             d[strg] = elem
