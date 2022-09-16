@@ -65,7 +65,7 @@ jobs:
       - name: Build wheels
         run: python -m cibuildwheel --output-dir wheelhouse
         env:
-          CIBW_SKIP: "pp* *-musllinux_* cp27-* cp35-* cp36-*"
+          CIBW_SKIP: "pp* *-musllinux_* cp27-* cp35-* cp36-* cp37-*"
           CIBW_ARCHS_MACOS: "x86_64 universal2 arm64"
 
       - uses: actions/upload-artifact@v2
