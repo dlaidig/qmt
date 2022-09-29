@@ -132,6 +132,7 @@ class Webapp:
         # for PySide viewer only
         self.jsLogLevel = 'warning'  # info, warning, error, disabled
         self.devServerUrl = None
+        self.icon = None
 
         # for aiohttp viewer only
         self.host = '127.0.0.1'
@@ -543,6 +544,20 @@ class Webapp:
     @devServerUrl.setter
     def devServerUrl(self, devServerUrl):
         self._devServerUrl = devServerUrl
+
+    @property
+    def icon(self):
+        """
+        Path to application icon (PySide viewer only).
+
+        Set this property to a path to an image file (or some other value understood by the QIcon construction) to
+        replace the default application icon.
+        """
+        return self._icon
+
+    @icon.setter
+    def icon(self, icon):
+        self._icon = icon
 
     @property
     def host(self):

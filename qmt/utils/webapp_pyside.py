@@ -240,7 +240,8 @@ class WebappWindow(QtWebEngineWidgets.QWebEngineView):
         logger.setLevel(webapp.logLevel)
         self._closeEvent = closeEvent
 
-        icon = QtGui.QIcon(os.path.join(webapp.baseDir, 'lib-qmt/favicon.png'))
+        iconPath = webapp.icon if webapp.icon is not None else os.path.join(webapp.baseDir, 'lib-qmt/favicon.png')
+        icon = QtGui.QIcon(iconPath)
         self.setWindowIcon(icon)
         QtWidgets.QApplication.instance().setWindowIcon(icon)
 
