@@ -128,9 +128,9 @@ export default {
                 const label = this.markerLabel(marker)
 
                 if (typeof marker === 'number')
-                    highlights.push({start: marker, end: marker+minLength, class: 'C0', label: label})
+                    highlights.push({start: Math.max(marker, this.min), end: Math.min(marker+minLength, this.max), class: 'C0', label: label})
                 else
-                    highlights.push({start: marker.pos, end: marker.end ?? marker.pos+minLength, class: marker.col ?? 'C0', label: label})
+                    highlights.push({start: Math.max(marker.pos, this.min), end: Math.min(marker.end ?? marker.pos+minLength, this.max), class: marker.col ?? 'C0', label: label})
 
             }
             console.log('HIGHLIGHTS', highlights)

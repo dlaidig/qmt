@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated JavaScript dependencies of webapp library.
 ### Fixed
 - Fixed array broadcasting in `qmt.headingInclinationAngle`.
+- In `UiPlaybackControls`, show range highlights even when they start/end outside of the valid time range.
 
 ## [0.2.1] - 2022-05-09
 ### Changed
