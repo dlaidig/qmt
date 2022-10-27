@@ -51,9 +51,9 @@ def oriEstVQF(gyr, acc, mag=None, params=None, debug=False, plot=False):
     if mag is not None:
         mag = np.ascontiguousarray(mag, dtype=float)
 
-    assert(acc.shape == gyr.shape)
-    assert(acc.shape[1] == 3)
-    assert(mag is None or mag.shape == acc.shape)
+    assert acc.shape == gyr.shape
+    assert acc.shape[1] == 3
+    assert mag is None or mag.shape == acc.shape
 
     from vqf import VQF
     vqf = VQF(Ts, **params)
@@ -135,9 +135,9 @@ def oriEstBasicVQF(gyr, acc, mag=None, params=None, debug=False, plot=False):
     if mag is not None:
         mag = np.ascontiguousarray(mag, dtype=float)
 
-    assert(acc.shape == gyr.shape)
-    assert(acc.shape[1] == 3)
-    assert(mag is None or mag.shape == acc.shape)
+    assert acc.shape == gyr.shape
+    assert acc.shape[1] == 3
+    assert mag is None or mag.shape == acc.shape
 
     from vqf import BasicVQF
     vqf = BasicVQF(Ts, **params)
@@ -209,9 +209,9 @@ def oriEstOfflineVQF(gyr, acc, mag=None, params=None, debug=False, plot=False):
     if mag is not None:
         mag = np.ascontiguousarray(mag, dtype=float)
 
-    assert(acc.shape == gyr.shape)
-    assert(acc.shape[1] == 3)
-    assert(mag is None or mag.shape == acc.shape)
+    assert acc.shape == gyr.shape
+    assert acc.shape[1] == 3
+    assert mag is None or mag.shape == acc.shape
 
     from vqf import offlineVQF
     out = offlineVQF(gyr, acc, mag, Ts, params)
@@ -295,9 +295,9 @@ def oriEstMadgwick(gyr, acc, mag=None, params=None, debug=False, plot=False):
     if mag is not None:
         mag = np.ascontiguousarray(mag, dtype=float)
 
-    assert(acc.shape == gyr.shape)
-    assert(acc.shape[1] == 3)
-    assert(mag is None or mag.shape == acc.shape)
+    assert acc.shape == gyr.shape
+    assert acc.shape[1] == 3
+    assert mag is None or mag.shape == acc.shape
 
     from qmt.cpp.madgwick import MadgwickAHRS
     obj = MadgwickAHRS(params['beta'], 1/params['Ts'])
@@ -379,9 +379,9 @@ def oriEstMahony(gyr, acc, mag=None, params=None, debug=False, plot=False):
     if mag is not None:
         mag = np.ascontiguousarray(mag, dtype=float)
 
-    assert(acc.shape == gyr.shape)
-    assert(acc.shape[1] == 3)
-    assert(mag is None or mag.shape == acc.shape)
+    assert acc.shape == gyr.shape
+    assert acc.shape[1] == 3
+    assert mag is None or mag.shape == acc.shape
 
     from qmt.cpp.madgwick import MahonyAHRS
     obj = MahonyAHRS(params['Kp'], params['Ki'], 1/params['Ts'])
@@ -477,9 +477,9 @@ def oriEstIMU(gyr, acc, mag=None, params=None, debug=False, plot=False):
     if mag is not None:
         mag = np.ascontiguousarray(mag, dtype=float)
 
-    assert(acc.shape == gyr.shape)
-    assert(acc.shape[1] == 3)
-    assert(mag is None or mag.shape == acc.shape)
+    assert acc.shape == gyr.shape
+    assert acc.shape[1] == 3
+    assert mag is None or mag.shape == acc.shape
 
     from qmt.cpp.oriestimu import OriEstIMU
     oriEstImu = OriEstIMU(1/params['Ts'], params['tauAcc'], params['tauMag'], params['zeta'], params['accRating'])
