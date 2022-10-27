@@ -23,5 +23,8 @@ echo "Check REUSE compliance:"
 reuse lint
 echo ""
 
+echo "Checking code style:"
+flake8
+
 echo "Running unit tests:"
 pytest

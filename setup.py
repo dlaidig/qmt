@@ -65,7 +65,7 @@ setup(
                       'aiohttp>=3.8.1', 'aiofiles', 'orjson', 'qasync', 'vqf'],
     extras_require={
         # pip3 install --user -e ".[dev]"
-        'dev': ['pytest', 'pytest-flake8', 'flake8<4',  # https://github.com/tholo/pytest-flake8/issues/81
+        'dev': ['pytest', 'flake8',
                 'reuse', 'Cython', 'sphinx', 'recommonmark', 'sphinx-rtd-theme', 'sphinxcontrib-matlabdomain'],
     },
 
