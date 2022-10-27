@@ -122,12 +122,12 @@ class SchemeHandler(QtWebEngineCore.QWebEngineUrlSchemeHandler):
         if basedir is not None:  # check if normalized path is inside basedir
             if os.path.commonpath((basedir, os.path.abspath(path))) != basedir:
                 logger.error(f'path "{path}" => "{os.path.abspath(path)}" is outside of basedir "{basedir}"')
-                request.fail(request.RequestDenied)
+                request.fail(QtWebEngineCore.QWebEngineUrlRequestJob.RequestDenied)
                 return
 
         if not os.path.isfile(path):
             logger.error(f'path "{path}" => "{os.path.abspath(path)}" not found')
-            request.fail(request.UrlNotFound)
+            request.fail(QtWebEngineCore.QWebEngineUrlRequestJob.UrlNotFound)
             return
 
         # Note: Using aiofiles causes issues on shutdown ("QThread: Destroyed while thread is still running") and
@@ -161,7 +161,7 @@ class SchemeHandler(QtWebEngineCore.QWebEngineUrlSchemeHandler):
             return
         path = os.path.join(self.webapp.dirname, 'config.json')
         if not os.path.isfile(path):
-            request.fail(request.UrlNotFound)
+            request.fail(QtWebEngineCore.QWebEngineUrlRequestJob.UrlNotFound)
             return
         self._serve(request, path, self.webapp.dirname)
 
@@ -172,7 +172,7 @@ class SchemeHandler(QtWebEngineCore.QWebEngineUrlSchemeHandler):
             return
         path = os.path.join(self.webapp.dirname, 'data.json')
         if not os.path.isfile(path):
-            request.fail(request.UrlNotFound)
+            request.fail(QtWebEngineCore.QWebEngineUrlRequestJob.UrlNotFound)
             return
         self._serve(request, path, self.webapp.dirname)
 
@@ -285,10 +285,10 @@ class WebappWindow(QtWebEngineWidgets.QWebEngineView):
 
         self.setPage(self.page)
 
-        self.page.action(self.page.Reload).setShortcut('F5')
-        self.addAction(self.page.action(self.page.Reload))  # to enable the keyboard shortcut
-        self.page.action(self.page.SavePage).setVisible(False)
-        self.page.action(self.page.ViewSource).setVisible(False)
+        self.page.action(QWebEnginePage.Reload).setShortcut('F5')
+        self.addAction(self.page.action(QWebEnginePage.Reload))  # to enable the keyboard shortcut
+        self.page.action(QWebEnginePage.SavePage).setVisible(False)
+        self.page.action(QWebEnginePage.ViewSource).setVisible(False)
 
         # Note: webcam access does not seem to work with the qmt:// scheme
         # self.page.featurePermissionRequested.connect(self.onFeaturePermissionRequested)
