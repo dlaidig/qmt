@@ -5,7 +5,7 @@ SPDX-License-Identifier: MIT
 -->
 
 <template>
-    <UiRenderCanvas ref="renderCanvas" />
+    <UiRenderCanvas ref="renderCanvas" @click="rotate"/>
 </template>
 
 <script>
@@ -31,7 +31,8 @@ class IMUScene extends Scene {
         this.camera.parent = this.cameraTransform
         this.light = new BABYLON.HemisphericLight('light', new BABYLON.Vector3(0,0,1), this.scene)
 
-        this.imu = new IMUBox(this.scene, this.options)
+        const imuboxClass = this.options.imuboxClass ?? IMUBox
+        this.imu = new imuboxClass(this.scene, this.options)
 
         this.ui = GUI.AdvancedDynamicTexture.CreateFullscreenUI('ui', true, this.scene)
         this.textbox = new GUI.TextBlock()
@@ -56,6 +57,10 @@ class IMUScene extends Scene {
         const text = 'yaw:\n' + Math.round(angles[0]) + '°\npitch:\n' + Math.round(angles[1]) + '°\nroll:\n' + Math.round(angles[2]) + '°'
         this.textbox.text = text
     }
+
+    rotate() {
+        this.camera.alpha = this.camera.alpha + Math.PI/2
+    }
 }
 
 
@@ -65,6 +70,7 @@ export default {
     props: {
         source: { type: Object, default: {} },
         options: { type: Object, default: {} },
+        rotateOnClick: { type: Boolean, default: false },
     },
     data() {
         return {
@@ -80,6 +86,13 @@ export default {
         options(options) {
             this.scene.options.signal = options.signal ?? 'quat'
             this.scene.options.axisSignal = options.axisSignal ?? ''
+        }
+    },
+    methods: {
+        rotate() {
+            if (!this.rotateOnClick)
+                return
+            this.scene.rotate()
         }
     }
 }

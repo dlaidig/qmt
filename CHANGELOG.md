@@ -19,7 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- Ability to use custom IMU boxes in BoxModel.
+- Ability to use custom IMU boxes in BoxModel and UiIMUScene.
+- Option to rotate camera in UiIMUScene on click.
 ### Fixed
 - Make webapp viewer work with PySide 6.4.
 
