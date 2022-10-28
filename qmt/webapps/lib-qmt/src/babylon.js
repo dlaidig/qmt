@@ -277,6 +277,15 @@ export class IMUBox {
         this.box.rotationQuaternion = this._quat.multiply(this.q_Box2Imu).babylon()
     }
 
+    set position(position) {
+        this.box.position = new BABYLON.Vector3(...position)
+    }
+
+    get position() {
+        const pos = this.box.position
+        return [pos.x, pos.y, pos.z]
+    }
+
     set visibility(visible) {
         this.box.visibility = visible
         if (this.led)

@@ -47,9 +47,9 @@ SPDX-License-Identifier: MIT
             this.light2 = new BABYLON.DirectionalLight('light2', new BABYLON.Vector3(0.2, 0, -0.1), this.scene)
 
             this.imu1 = new IMUBox(this.scene, {letter: 'A', axes: true, cs: 'RFU'});
-            this.imu1.box.position.x = 3.2;
+            this.imu1.position = [3.2, 0, 0];
             this.imu2 = new IMUBox(this.scene,  {letter: 'B', axes: true, cs: 'RFU'});
-            this.imu2.box.position.x = -3.2;
+            this.imu2.position = [-3.2, 0, 0];
 
             this.floor = new FloorBox(this.scene);
         }

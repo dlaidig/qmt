@@ -42,9 +42,9 @@ SPDX-License-Identifier: MIT
 
             const shift = 5
             this.imu1 = new IMUBox(this.scene, {axes: false, letter: 'A', cs: cs})
-            this.imu1.box.position.x = shift
+            this.imu1.position = [shift, 0, 0]
             this.imu2 = new IMUBox(this.scene, {axes: false, letter: 'B', cs: cs})
-            this.imu2.box.position.x = -shift
+            this.imu2.position = [-shift, 0, 0]
 
             const diameter = 0.15
 

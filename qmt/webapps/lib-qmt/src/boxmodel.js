@@ -442,7 +442,8 @@ class BoxModelSegment {
         if (this.options.imubox_show && this.options.q_segment2sensor) {
             const cs = this.options.imubox_cs
             const imuOpts = {cs, scale: this.options.scale * this.options.imubox_scale, led: false, axes: true, ...this.options.imubox_options}
-            this.imu = new IMUBox(this.scene, imuOpts)
+            const imuboxClass = this.options.imubox_class ?? IMUBox
+            this.imu = new imuboxClass(this.scene, imuOpts)
             this.imu.box.parent = this.box
 
             this._updateImuBox()
@@ -472,7 +473,7 @@ class BoxModelSegment {
 
         // calculate distance from segment box center to IMU box center
         const dist = this.options.imubox_distance_rel*baseDist/2 + this.options.imubox_distance_abs
-        this.imu.box.position = new BABYLON.Vector3(...vecSegment.map(e => e*this.options.scale*dist))
+        this.imu.position = vecSegment.map(e => e*this.options.scale*dist)
 
         this.imu.quat = this.q_segment2sensor.conj()
     }
