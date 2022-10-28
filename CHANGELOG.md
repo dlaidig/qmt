@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Ability to use custom IMU boxes in BoxModel and UiIMUScene.
 - Option to rotate camera in UiIMUScene on click.
+### Changed
+- Use version 2.0.0 of the VQF orientation estimation algorithm.
 ### Fixed
 - Make webapp viewer work with PySide 6.4.
 

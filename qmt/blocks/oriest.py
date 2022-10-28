@@ -26,7 +26,8 @@ class OriEstVQFBlock(qmt.Block):
     """
     VQF orientation estimation algorithm.
 
-    See https://arxiv.org/abs/2203.17024 and https://github.com/dlaidig/vqf for more information about this algorithm.
+    See https://github.com/dlaidig/vqf, https://doi.org/10.1016/j.inffus.2022.10.014, and
+    https://arxiv.org/abs/2203.17024 for more information about this algorithm.
 
     This algorithm is also available as a function: :meth:`qmt.oriEstVQF`.
     """
@@ -57,9 +58,8 @@ class OriEstVQFBlock(qmt.Block):
                 self.obj.setRestBiasEstEnabled(value)
             elif name == 'magDistRejectionEnabled':
                 self.obj.setMagDistRejectionEnabled(value)
-            elif name in ('restThGyr', 'restThAcc', 'restThMag'):
-                self.obj.setRestDetectionThresholds(self.params['restThGyr'], self.params['restThAcc'],
-                                                    self.params['restThMag'])
+            elif name in ('restThGyr', 'restThAcc'):
+                self.obj.setRestDetectionThresholds(self.params['restThGyr'], self.params['restThAcc'])
             else:
                 print(f'ignored param {name}')
 

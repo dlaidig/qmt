@@ -472,14 +472,13 @@ SPDX-License-Identifier: MIT
                         <p>IMU A</p>
                         <UiLinePlot
                             :source="backend" :style="plotStyle"
-                            :signals="['one', 'vqfA.gyrdev', 'vqfA.accdev', 'vqfA.magdev', 'vqfA.rest']"
-                            :labels="['', 'gyrdev', 'accdev', 'magdev', 'rest']"
-                            :colors="['black', 'C0', 'C1', 'C2', 'C3']"
+                            :signals="['one', 'vqfA.gyrdev', 'vqfA.accdev', 'vqfA.rest']"
+                            :labels="['', 'gyrdev', 'accdev', 'rest']"
+                            :colors="['black', 'C0', 'C1', 'C3']"
                             :ylim="[0, 3]"
                         />
                         <UiSlider v-model="restThGyrA" label="thGyr" :min="0.0" :max="6.0" :step="0.1" :ticks="[0, 2, 6]" labelWidth="4em" />
                         <UiSlider v-model="restThAccA" label="thAcc" :min="0.0" :max="6.0" :step="0.1" :ticks="[0, 0.5, 6]" labelWidth="4em" />
-                        <UiSlider v-model="restThMagA" label="thMag" :min="0.0" :max="0.2" :step="0.01" :ticks="[0, 0.1, 0.2]"  labelWidth="4em" />
                     </div>
                     <div v-else>
                         IMU A: not available (VQF algorithm only)
@@ -488,14 +487,13 @@ SPDX-License-Identifier: MIT
                         <p>IMU B</p>
                         <UiLinePlot
                             :source="backend" :style="plotStyle"
-                            :signals="['one', 'vqfB.gyrdev', 'vqfB.accdev', 'vqfB.magdev', 'vqfB.rest']"
-                            :labels="['', 'gyrdev', 'accdev', 'magdev', 'rest']"
-                            :colors="['black', 'C0', 'C1', 'C2', 'C3']"
+                            :signals="['one', 'vqfB.gyrdev', 'vqfB.accdev', 'vqfB.rest']"
+                            :labels="['', 'gyrdev', 'accdev', 'rest']"
+                            :colors="['black', 'C0', 'C1', 'C3']"
                             :ylim="[0, 3]"
                         />
                         <UiSlider v-model="restThGyrB" label="thGyr" :min="0.0" :max="6.0" :step="0.1" :ticks="[0, 2, 6]" labelWidth="4em" />
                         <UiSlider v-model="restThAccB" label="thAcc" :min="0.0" :max="6.0" :step="0.1" :ticks="[0, 0.5, 6]" labelWidth="4em" />
-                        <UiSlider v-model="restThMagB" label="thMag" :min="0.0" :max="0.2" :step="0.01" :ticks="[0, 0.1, 0.2]"  labelWidth="4em" />
                     </div>
                     <div v-else>
                         IMU B: not available (VQF algorithm only)
@@ -542,10 +540,8 @@ SPDX-License-Identifier: MIT
                 biasSimEnabledB: true,
                 restThGyrA: 2.0,
                 restThAccA: 0.5,
-                restThMagA: 0.1,
                 restThGyrB: 2.0,
                 restThAccB: 0.5,
-                restThMagB: 0.1,
                 algorithmA: 'none',
                 algorithmB: 'none',
             }
@@ -567,10 +563,8 @@ SPDX-License-Identifier: MIT
             this.backend.addParam(this, 'biasSimEnabledB')
             this.backend.addParam(this, 'restThGyrA', 'param_A_VQF_restThGyr')
             this.backend.addParam(this, 'restThAccA', 'param_A_VQF_restThAcc')
-            this.backend.addParam(this, 'restThMagA', 'param_A_VQF_restThMag')
             this.backend.addParam(this, 'restThGyrB', 'param_B_VQF_restThGyr')
             this.backend.addParam(this, 'restThAccB', 'param_B_VQF_restThAcc')
-            this.backend.addParam(this, 'restThMagB', 'param_B_VQF_restThMag')
         },
         methods: {
             formatDisagreementLegend(val) {
@@ -644,7 +638,6 @@ SPDX-License-Identifier: MIT
                         sigmaXYZ: [0, 0, 0],
                         gyrdev: 0,
                         accdev: 0,
-                        magdev: 0,
                         rest: 0,
                     }
                 }
@@ -683,7 +676,6 @@ SPDX-License-Identifier: MIT
                     // for rest detection plot
                     gyrdev: Math.sqrt(state.restLastSquaredDeviations[0]) / deg2rad(params.restThGyr),
                     accdev: Math.sqrt(state.restLastSquaredDeviations[1]) / params.restThAcc,
-                    magdev: Math.sqrt(state.restLastSquaredDeviations[2]) / vecNorm(state.restLastMagLp) / params.restThMag,
                     rest: state.restDetected,
                 }
             }
