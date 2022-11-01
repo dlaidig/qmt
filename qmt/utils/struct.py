@@ -245,6 +245,25 @@ class Struct:
         """Turn all lists that only contain numbers into numpy arrays."""
         _createArrays(self._data)
 
+    def update(self, other, overwrite=True):
+        """
+        Updates this struct with all values of the given struct, similar to the update method of ``dict``.
+        Unless the overwrite parameter is set to False, existing values are overwritten.
+
+        :param other: other Struct object
+        :param overwrite: if set to False, a ValueError is raised if data would be overwritten
+        :return: None
+        """
+        if not isinstance(other, Struct):
+            other = Struct(data=other)  # try to convert to Struct
+        if not overwrite:  # check all keys
+            newKeys = other.leafKeys()
+            existingKeys = self.allKeys()
+            if set(newKeys) & set(existingKeys):
+                raise ValueError(f'existing keys would be overwritten: {set(newKeys) & set(existingKeys)}')
+        for k in other.leafKeys():
+            self[k] = other[k]
+
     def diff(self, ref, exact=False, rtol=1e-07, atol=0, verbose=False, plot=False):
         """
         Print differences between this struct and another given struct.
