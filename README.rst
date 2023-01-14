@@ -59,10 +59,10 @@ Contact
 Daniel Laidig <laidig at control.tu-berlin.de>
 
 
-.. |tests| image:: https://img.shields.io/github/workflow/status/dlaidig/qmt/Tests?label=tests
-    :target: https://github.com/dlaidig/qmt/actions?query=workflow%3ATests
-.. |build| image:: https://img.shields.io/github/workflow/status/dlaidig/qmt/Build
-    :target: https://github.com/dlaidig/qmt/actions?query=workflow%3ABuild
+.. |tests| image:: https://img.shields.io/github/actions/workflow/status/dlaidig/qmt/tests.yml?branch=main
+    :target: https://github.com/dlaidig/qmt/actions/workflows/tests.yml
+.. |build| image:: https://img.shields.io/github/actions/workflow/status/dlaidig/qmt/build.yml?branch=main
+    :target: https://github.com/dlaidig/qmt/actions/workflows/build.yml
 .. |docs| image:: https://img.shields.io/readthedocs/qmt
     :target: https://qmt.readthedocs.io/
 .. |version| image:: https://img.shields.io/pypi/v/qmt
