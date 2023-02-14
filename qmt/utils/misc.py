@@ -57,7 +57,7 @@ def toJson(obj, method='orjson', indent=None, sort_keys=False):
         else:
             raise ValueError('invalid method')
     elif isinstance(obj, Struct):
-        return obj.toJson()
+        return obj.toJson(method, indent, sort_keys)
     raise ValueError('invalid obj')
 
 
