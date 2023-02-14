@@ -18,6 +18,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Webapps support loading data from a (data) URL passed via the location hash (i.e., after a `#`).
 ### Changed
 - Improved Chrome/Chromium auto-detection on macOS.
 ### Fixed

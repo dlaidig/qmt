@@ -126,7 +126,10 @@ export class Backend extends Emitter {
                     })
             }
 
-            const dataUrl = urlParams.get('data') ?? './data.json'
+            const hashIsUrl = window.location.hash.startsWith('#http://') ||
+                window.location.hash.startsWith('#https://') ||
+                window.location.hash.startsWith('#data:')
+            const dataUrl = hashIsUrl ? window.location.hash.slice(1) : (urlParams.get('data') ?? './data.json')
             fetch(fetchSchemeWorkaround(dataUrl))
                 .then(response => {
                     if (!response.ok) {
