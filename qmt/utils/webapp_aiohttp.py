@@ -113,7 +113,7 @@ class AiohttpWebappViewer(AbstractWebappViewer):
                 await site.start()
                 break
             except OSError as e:
-                if e.errno == 98 and self.webapp.autoIncrementPort and i < 100:
+                if e.errno in (98, 48) and self.webapp.autoIncrementPort and i < 100:
                     logger.info(f'port {self.webapp.port + i} already in use, incrementing...')
                     i += 1
                 else:
