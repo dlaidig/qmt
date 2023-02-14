@@ -27,4 +27,4 @@ echo "Checking code style:"
 flake8
 
 echo "Running unit tests:"
-pytest
+pytest --nomatlab
