@@ -22,7 +22,9 @@ def _findChromium():
     candidates = [
         'chromium-browser',
         'chromium',
+        '/Applications/Chromium.app/Contents/MacOS/Chromium',
         'google-chrome',
+        '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
     ]
     for path in candidates:
         if shutil.which(path) is not None:
