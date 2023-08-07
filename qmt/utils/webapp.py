@@ -329,9 +329,13 @@ class Webapp:
         handled = False
         if self.source is not None:
             handled = self.source.command(command)
+            if inspect.isawaitable(handled):
+                handled = await handled
         if self.block is not None and not handled:
             if hasattr(self.block, 'command'):
-                self.block.command(command)
+                ret = self.block.command(command)
+                if inspect.isawaitable(ret):
+                    await ret
 
         await self.emit('command', command)
 
@@ -705,12 +709,16 @@ class Webapp:
             if isinstance(sample, list):  # sample is actually a command
                 if sample[0] == '@block':  # only send to processing block
                     if hasattr(self.block, 'command'):
-                        self.block.command(sample[1:])
+                        ret = self.block.command(sample[1:])
+                        if inspect.isawaitable(ret):
+                            await ret
                 elif sample[0] == '@webapp':  # only send to webapp
                     self.sendCommand(sample[1:])
                 else:  # send to processing block first and then, unless True is returned, to the webapp
                     if hasattr(self.block, 'command'):
                         handled = self.block.command(sample)
+                        if inspect.isawaitable(handled):
+                            handled = await handled
                     else:
                         handled = False
                     if handled is not True:
@@ -744,7 +752,9 @@ class Webapp:
                     if s[0] == '@webapp':  # does not have any effect, but remove the first entry
                         self.sendCommand(s[1:])
                     elif s[0] == '@datasource':
-                        self.source.command(s)  # send to data source if the first entry is @datasource
+                        ret = self.source.command(s)  # send to data source if the first entry is @datasource
+                        if inspect.isawaitable(ret):
+                            await ret
                     else:
                         self.sendCommand(s)  # send to webapp by default
                 else:

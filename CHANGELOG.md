@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Webapps support loading data from a (data) URL passed via the location hash (i.e., after a `#`).
+- Support for async command handlers in data sources and blocks.
 ### Changed
 - Improved Chrome/Chromium auto-detection on macOS.
 ### Fixed
