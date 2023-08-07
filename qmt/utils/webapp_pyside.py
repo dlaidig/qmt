@@ -105,7 +105,6 @@ class SchemeHandler(QtWebEngineCore.QWebEngineUrlSchemeHandler):
         url = request.requestUrl()
         path = url.path()
         assert url.scheme() == 'qmt'
-        assert url.host() == 'app'
 
         if path in ('/', '/index.html'):
             self._serve(request, self.webapp.path, self.webapp.dirname)
