@@ -26,6 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Do not ignore options when passing a `qmt.Struct` to `qmt.toJson`.
 - Detection of in-use ports when starting a webapp server is more robust.
+- Initialize `sendQueue` in webapps started via `arun`.
+- Remove assert that started to fail in custom SchemeHandler of PySide-based webapp backend.
 
 ## [0.2.3] - 2022-11-01
 ### Added

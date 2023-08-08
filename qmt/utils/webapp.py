@@ -203,6 +203,8 @@ class Webapp:
         """
         if self.viewer is None:
             self.viewer = self._createViewer()
+        if self.sendQueue is None:
+            self.sendQueue = asyncio.Queue()
 
         loop = asyncio.get_event_loop()
         self._tasks = [
