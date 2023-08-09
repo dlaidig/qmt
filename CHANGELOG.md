@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for async command handlers in data sources and blocks.
 ### Changed
 - Improved Chrome/Chromium auto-detection on macOS.
+- Updated vite version.
 ### Fixed
 - Do not ignore options when passing a `qmt.Struct` to `qmt.toJson`.
 - Detection of in-use ports when starting a webapp server is more robust.
