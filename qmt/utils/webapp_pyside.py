@@ -367,14 +367,6 @@ class PysideWebappViewer(AbstractWebappViewer):
                 logger.warning(f'non-qasync event loop is already running: {loop}')
             loop = qasync.QEventLoop(app)
             asyncio.set_event_loop(loop)
-        app.setQuitOnLastWindowClosed(False)
-        # Instead of using setQuitOnLastWindowClosed, matplotlib connects the lastWindowClosed signal to the quit slot:
-        # https://github.com/matplotlib/matplotlib/blob/6b84f24217a9/lib/matplotlib/backends/backend_qt.py#L124
-        # If we don't disconnect this, the QApplication will quit and the event loop will be destroyed too early.
-        try:
-            app.lastWindowClosed.disconnect()
-        except RuntimeError:
-            pass
 
     def createTasks(self, loop):
         return [
@@ -391,6 +383,18 @@ class PysideWebappViewer(AbstractWebappViewer):
 
     async def _run(self):
         closeEvent = asyncio.Event()
+
+        app = QtWidgets.QApplication.instance()
+        if self.webapp.show != 'widget':
+            app.setQuitOnLastWindowClosed(False)
+            # Instead of using setQuitOnLastWindowClosed, matplotlib connects the lastWindowClosed signal
+            # to the quit slot:
+            # https://github.com/matplotlib/matplotlib/blob/6b84f24217a9/lib/matplotlib/backends/backend_qt.py#L124
+            # If we don't disconnect this, the QApplication will quit and the event loop will be destroyed too early.
+            try:
+                app.lastWindowClosed.disconnect()
+            except RuntimeError:
+                pass
 
         self.mainWindow = WebappWindow(self.webapp, closeEvent)
         self.mainWindow.connection.messageFromWeb.connect(self._onMessageFromWeb)
