@@ -300,6 +300,8 @@ export function fetchSchemeWorkaround(url) {
     const abs = new URL(url, document.baseURI).href
     if (abs.startsWith('qmt://')) {
         return 'http://' + abs.slice(6)
+    } else if (abs.startsWith('qmt:/')) {
+        return 'http://app/' + abs.slice(5)
     }
     return url
 }
