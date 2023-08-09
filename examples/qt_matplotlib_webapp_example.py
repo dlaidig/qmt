@@ -13,10 +13,15 @@ Note that the qasync event loop is used, which makes it possible to integrate as
 
 import asyncio
 import signal
+import sys
 
 import numpy as np
-from PySide2 import QtCore
-from PySide2 import QtWidgets
+try:
+    from PySide6 import QtCore
+    from PySide6 import QtWidgets
+except ImportError:
+    from PySide2 import QtCore
+    from PySide2 import QtWidgets
 import qasync
 from matplotlib.backends.backend_qt5agg import (FigureCanvas, NavigationToolbar2QT as NavigationToolbar)
 from matplotlib.figure import Figure
@@ -143,6 +148,15 @@ async def main():
 if __name__ == "__main__":
     try:
         qmt.Webapp.initialize()
-        qasync.run(main())
+        # see https://github.com/CabbageDevelopment/qasync/issues/68#issuecomment-1499299576
+        if sys.version_info.major == 3 and sys.version_info.minor >= 11:
+            with qasync._set_event_loop_policy(qasync.DefaultQEventLoopPolicy()):
+                runner = asyncio.runners.Runner()
+                try:
+                    runner.run(main())
+                finally:
+                    runner.close()
+        else:
+            qasync.run(main())
     except asyncio.CancelledError:
         pass
