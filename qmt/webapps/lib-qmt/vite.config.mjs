@@ -4,10 +4,24 @@
 
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-const path = require('path')
+import esbuild from 'esbuild'
+import path from 'node:path'
+
+// https://github.com/vitejs/vite/issues/6555#issuecomment-2179483448
+const minifyBundle = () => ({
+	name: 'minify-bundle',
+	async generateBundle(_, bundle)
+	{
+		for (const asset of Object.values(bundle))
+		{
+			if (asset.type == 'chunk')
+				asset.code = (await esbuild.transform(asset.code, {minify: true})).code
+		}
+	}
+})
 
 export default defineConfig({
-    plugins: [vue()],
+    plugins: [vue(), minifyBundle()],
     build: {
         sourcemap: true,
         lib: {
@@ -34,10 +48,13 @@ export default defineConfig({
             'vue': 'vue/dist/vue.esm-bundler.js',
         },
     },
+    define: {
+        'process.env': {}
+    }
     // note that minify will not work with vite 2.6, cf. https://github.com/vitejs/vite/issues/5167 and
     // https://github.com/vitejs/vite/issues/6555
     // this works: https://github.com/vuejs/petite-vue/pull/112
-    esbuild: {
-        minify: true,
-    },
+//     esbuild: {
+//         minify: true,
+//     },
 })

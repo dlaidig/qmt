@@ -1,1 +1,1 @@
-dist/lib-qmt.es.js
+dist/lib-qmt.mjs

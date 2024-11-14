@@ -142,7 +142,6 @@ SPDX-License-Identifier: MIT
                 <template #default>
                     <UiLinePlot
                         :source="source" :signals="['zero', 'gyr1.0', 'gyr1.1', 'gyr1.2']"
-                        :style="plotStyle"
                         :labels="[undefined, 'x', 'y', 'z']"
                         :colors="['black', 'C3', 'C2', 'C0']"
                         :ylim="[-360, 360]" :scaleFactor="180/Math.PI"
@@ -155,7 +154,6 @@ SPDX-License-Identifier: MIT
                 <template #default>
                     <UiLinePlot
                         :source="source" :signals="['zero', 'acc1.0', 'acc1.1', 'acc1.2']"
-                        :style="plotStyle"
                         :labels="[undefined, 'x', 'y', 'z']"
                         :colors="['black', 'C3', 'C2', 'C0']"
                         :ylim="[-20, 20]"
@@ -168,7 +166,6 @@ SPDX-License-Identifier: MIT
                     <template #default>
                     <UiLinePlot
                         :source="source" :signals="['zero', 'mag1.0', 'mag1.1', 'mag1.2']"
-                        :style="plotStyle"
                         :labels="['', 'x', 'y', 'z']"
                         :colors="['black', 'C3', 'C2', 'C0']"
                         :ylim="[-100, 100]"
