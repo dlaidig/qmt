@@ -21,7 +21,7 @@ jobs:
       - uses: actions/setup-node@v4
         name: Install Node
         with:
-          node-version: 16
+          node-version: 22
 
       - name: Run npm install
         working-directory: qmt/webapps/lib-qmt
