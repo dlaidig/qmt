@@ -1,0 +1,26 @@
+# SPDX-FileCopyrightText: 2024 Daniel Laidig <laidig@control.tu-berlin.de>
+#
+# SPDX-License-Identifier: MIT
+
+version = 1
+SPDX-PackageName = "qmt"
+SPDX-PackageSupplier = "Daniel Laidig <laidig@control.tu-berlin.de>"
+SPDX-PackageDownloadLocation = "https://github.com/dlaidig/qmt"
+
+[[annotations]]
+path = "docs/images/webapp-**.png"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2021 Daniel Laidig <laidig@control.tu-berlin.de>"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = "qmt/matlab/lib/JointAxisEstHingeOlsson/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2021 Fredrik Olsson <fredrik.olsson@it.uu.se>"
+SPDX-License-Identifier = "LicenseRef-Unspecified"
+
+[[annotations]]
+path = ["qmt/cpp/madgwick_src/**.cpp", "qmt/cpp/madgwick_src/**.hpp", "qmt/cpp/madgwick_src/original_downloads/**.c", "qmt/cpp/madgwick_src/original_downloads/**.zip"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2011 Sebastian O.H. Madgwick"
+SPDX-License-Identifier = "LicenseRef-Unspecified"
