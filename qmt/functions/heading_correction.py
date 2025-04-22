@@ -12,7 +12,7 @@ from qmt.utils.misc import setDefaults
 from qmt.utils.plot import AutoFigure
 
 
-def headingCorrection(gyr1, gyr2, quat1, quat2, t, joint, jointInfo, estSettings=None, verbose=False,
+def headingCorrection(gyr1, gyr2, acc1, acc2, quat1, quat2, t, joint, jointInfo, estSettings=None, verbose=False,
                       debug=False, plot=False):
     """
     This function corrects the heading of a kinematic chain of two segments whose orientations are estimated without
@@ -25,14 +25,18 @@ def headingCorrection(gyr1, gyr2, quat1, quat2, t, joint, jointInfo, estSettings
 
     :param gyr1: Nx3 array of angular velocities in rad/s
     :param gyr2: Nx3 array of angular velocities in rad/s
+    :param acc1: Nx3 array of accelerations in m/s^2
+    :param acc2: Nx3 array of accelerations in m/s^2
     :param quat1: Nx4 array of orientation quaternions
     :param quat2: Nx4 array of orientation quaternions
     :param t: Nx1 vector of the equidistant sampled time signal
     :param joint: Dofx3 array containing the axes of the joint.
     :param jointInfo: Dictionary containing additional joint information. Only needed for 3D-joints. Keys:
 
-                   - **convention**: String of the chosen euler angles convention, e.g. 'xyz'
-                   - **angle_ranges**: 3x2 array with the minimum and maximum value for each joint angle in radians
+                   - **convention**: String of the chosen euler angles convention, e.g. 'xyz' (for `rom` constraint)
+                   - **angle_ranges**: 3x2 array with the minimum and maximum value for each joint angle in radians (for `rom` constraint)
+                   - **r1**: 3D vector specificing IMU1-to-jointcenter vector in meters (for `conn` constraint)
+                   - **r2**: 3D vector specificing IMU2-to-jointcenter vector in meters (for `conn` constraint)
 
     :param verbose: show all logs in function. Disabled by Default.
     :param estSettings: structure containing the needed settings for the estimation:
@@ -56,7 +60,7 @@ def headingCorrection(gyr1, gyr2, quat1, quat2, t, joint, jointInfo, estSettings
 
                - Constraints for 1D: (proj, euler, euler_2d, 1d_corr).
                - Constraints for 2D: (euler, gyro, combined).
-               - Constraints for 3D: (default)
+               - Constraints for 3D: (rom, conn)
 
            - **optimizer_steps**: Number of Gauss-Newton steps during optimization.
 
@@ -129,9 +133,13 @@ def headingCorrection(gyr1, gyr2, quat1, quat2, t, joint, jointInfo, estSettings
     convention = estSettings['convention']
 
     if dof == 3:
-        angleRanges = np.asarray(jointInfo['angle_ranges'], float)
-        convention = jointInfo['convention']
-        constraint = estSettings.get('constraint', 'default')
+        constraint = estSettings.get("constraint", "rom")
+        angleRanges = jointInfo.get("angle_ranges", None)
+        if angleRanges is not None:
+            angleRanges = np.asarray(angleRanges, float)
+        convention = jointInfo.get("convention", None)
+        conn_constr_r1 = jointInfo.get("r1", None)
+        conn_constr_r2 = jointInfo.get("r2", None)
     elif dof == 2:
         constraint = estSettings.get('constraint', 'euler')
     else:
@@ -254,6 +262,8 @@ def headingCorrection(gyr1, gyr2, quat1, quat2, t, joint, jointInfo, estSettings
             q2 = quat2[indexStart:indexEnd + 1:dataSteps]
             g1 = gyr1[indexStart:indexEnd + 1:dataSteps]
             g2 = gyr2[indexStart:indexEnd + 1:dataSteps]
+            a1 = acc1[indexStart : indexEnd + 1 : dataSteps]
+            a2 = acc2[indexStart : indexEnd + 1 : dataSteps]
             time = t[indexStart:indexEnd + 1:dataSteps]
 
             # execute a dedicated estimation algorithm for each type of joint.
@@ -267,7 +277,8 @@ def headingCorrection(gyr1, gyr2, quat1, quat2, t, joint, jointInfo, estSettings
                                                                         constraint, optimizerSteps)
             else:
                 delta[k, :], rating[k, :], cost[k, :] = estimateDelta3d(q1, q2, angleRanges, convention, deltaRange,
-                                                                        delta[k - 1, :])
+                                                                        delta[k - 1, :], constraint, conn_constr_r1, 
+                                                                        conn_constr_r2, a1, a2, g1, g2, optimizerSteps, 1 / rate)
 
             # during startup estimation a second estimation is performed from a
             # different starting value to ensure that the global minimum is found
@@ -281,7 +292,8 @@ def headingCorrection(gyr1, gyr2, quat1, quat2, t, joint, jointInfo, estSettings
                                                        constraint, optimizerSteps)
                 else:
                     delta2, _, cost2 = estimateDelta3d(q1, q2, angleRanges, convention, deltaRange,
-                                                       delta[k - 1, :] + np.pi)
+                                                        delta[k - 1, :] + np.pi, constraint, conn_constr_r1, 
+                                                        conn_constr_r2, a1, a2, g1, g2, optimizerSteps, 1 / rate)
                 if useRomConstraints:
                     costRom = romCost(angleRanges, convention, q1, q2, delta[k, :])
                     costRom2 = romCost(angleRanges, convention, q1, q2, delta2)
@@ -826,8 +838,148 @@ def getJacCombCons(j1, j2, q1, q2, gyr1, gyr2, delta):
     return errors, jac
 
 
+
+def estimateDelta3d(
+    quat1,
+    quat2,
+    angleRanges,
+    convention,
+    deltaRange,
+    deltaStart,
+    constraint,
+    r1,
+    r2,
+    acc1,
+    acc2,
+    gyr1,
+    gyr2,
+    optimizationSteps,
+    Ts,
+):
+    if constraint == "rom":
+        return estimateDelta3d_rom(
+            quat1, quat2, angleRanges, convention, deltaRange, deltaStart
+        )
+    elif constraint == "conn":
+        return estimateDelta3d_conn(
+            quat1,
+            quat2,
+            r1,
+            r2,
+            acc1,
+            acc2,
+            gyr1,
+            gyr2,
+            deltaStart,
+            optimizationSteps,
+            Ts,
+        )
+    else:
+        raise NotImplementedError
+
+
+def estimateDelta3d_conn(
+    quat1, quat2, r1, r2, acc1, acc2, gyr1, gyr2, deltaStart, optimizationSteps, Ts
+):
+    delta = deltaStart
+    cost = 0.0
+
+    for _ in range(optimizationSteps):
+        deltaInc, cost = gaussNewtonStep_conn(
+            delta, quat1, quat2, r1, r2, acc1, acc2, gyr1, gyr2, Ts
+        )
+        delta = delta + deltaInc
+
+    delta = qmt.wrapTo2Pi(delta)
+
+    ratings = Cost3DConn(
+        delta, quat1, quat2, r1, r2, acc1, acc2, gyr1, gyr2, Ts, ratings=True
+    )
+    rating = qmt.rms(ratings)
+
+    return delta, rating, cost
+
+
+def gaussNewtonStep_conn(delta, quat1, quat2, r1, r2, acc1, acc2, gyr1, gyr2, Ts):
+    # based on Matlab implementation in matlab/lib/HeadingCorrection/errorAndJac_1D.m
+    errors, jacobi = getErrorAndJac3DConn(
+        delta, quat1, quat2, r1, r2, acc1, acc2, gyr1, gyr2, Ts
+    )
+    deltaParams = (
+        -1 * lstsq(np.atleast_2d(jacobi @ jacobi), np.atleast_2d(jacobi @ errors))[0]
+    )
+    deltaParams = np.squeeze(deltaParams)
+    totalError = np.linalg.norm(errors)
+
+    return deltaParams, totalError
+
+
+def getErrorAndJac3DConn(delta, quat1, quat2, r1, r2, acc1, acc2, gyr1, gyr2, Ts):
+    # based on Matlab implementation in matlab/lib/HeadingCorrection/errorAndJac_1D.m
+    errors = Cost3DConn(delta, quat1, quat2, r1, r2, acc1, acc2, gyr1, gyr2, Ts)
+    eps = 1e-8
+    errorsEps = Cost3DConn(delta, quat1, quat2, r1, r2, acc1, acc2, gyr1, gyr2, Ts)
+    jacobi = (errorsEps - errors) / eps
+    return errors, jacobi
+
+
+def Cost3DConn(delta, quat1, quat2, r1, r2, acc1, acc2, gyr1, gyr2, Ts, ratings=False):
+    # based on Matlab implementation in matlab/lib/HeadingCorrection/errorAndJac_1D.m
+    qE2E1 = qmt.quatFromAngleAxis(delta, [0, 0, 1])
+    # Body 2 realtive to Earth1
+    quat2 = qmt.qmult(qE2E1, quat2)
+
+    # calculate both acc1 and acc2 in the common joint center, then they are only
+    # in different CS, but vector should be the same
+    acc1_jc = _shift_operator_acc(gyr1, acc1, Ts, r1)
+    acc2_jc = _shift_operator_acc(gyr2, acc2, Ts, r2)
+
+    acc1_jc_E1 = qmt.rotate(quat1, acc1_jc)
+    acc2_jc_E1 = qmt.rotate(quat2, acc2_jc)
+
+    error = np.linalg.norm(acc1_jc_E1 - acc2_jc_E1, axis=-1)
+
+    if ratings:
+        return getRatingCost3DConn(acc1_jc_E1, acc2_jc_E1)
+    return error
+
+
+def getRatingCost3DConn(acc1_jc_E1, acc2_jc_E1):
+    # we have two rating measures for this constraint
+    # 1) both acceleration norms should be identical
+    # 2) both accelerations without gravity should be > 0, we need excitation
+    gravity = np.array([0, 0, 9.81])
+    a1, a2 = acc1_jc_E1 - gravity, acc2_jc_E1 - gravity
+    a1_norm, a2_norm = np.linalg.norm(a1, axis=-1), np.linalg.norm(a2, axis=-1)
+
+    rating1 = 1 / (1 + np.abs(a1_norm - a2_norm))
+    rating2 = (a1_norm + a2_norm) / 2
+    return rating1 * rating2
+
+
+def _shift_operator_acc(gyr, acc, Ts, r):
+    gyrdot = _gyrdot_fifth_order(gyr, Ts)
+    centripetal = np.cross(gyr, np.cross(gyr, r))
+    tangential = np.cross(gyrdot, r)
+    joint_center_acc = acc - centripetal - tangential
+    return joint_center_acc
+
+
+def _gyrdot_fifth_order(gyr, Ts):
+    gyrdot = np.zeros_like(gyr)
+    h = Ts
+
+    gyrdot[2:-2] = (-gyr[4:] + 8 * gyr[3:-1] - 8 * gyr[1:-3] + gyr[:-4]) / (12 * h)
+
+    gyrdot[0] = (gyr[1] - gyr[0]) / h
+    gyrdot[1] = (gyr[2] - gyr[0]) / (2 * h)
+    gyrdot[-2] = (gyr[-1] - gyr[-3]) / (2 * h)
+    gyrdot[-1] = (gyr[-1] - gyr[-2]) / h
+    return gyrdot
+
+
 #  3-D joint
-def estimateDelta3d(quat1, quat2, angleRanges, convention, deltaRange, deltaStart):
+def estimateDelta3d_rom(quat1, quat2, angleRanges, convention, deltaRange, deltaStart):
     # based on Matlab implementation in matlab/lib/HeadingCorrection/estimate_delta_3d.m
     # generate the distribution of values for delta that produce a valid relative orientation
     deltaProbability = getPossibleAngles(quat1, quat2, angleRanges[0, :], angleRanges[1, :], angleRanges[2, :],
